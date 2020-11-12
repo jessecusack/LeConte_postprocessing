@@ -33,7 +33,7 @@ cd code
 python -W ignore sep2018.py
 ```
 
-where the `-W ignore` option specifies that warnings should not be displayed. This is not strictly necessary but the text output to terminal may be cleaner.
+where the `-W ignore` option specifies that warnings should not be displayed. This is not strictly necessary but the text output to terminal may be cleaner. Note that currently, the code makes some assumptions about where the Dropbox folder is located, but different paths can be specified if this fails. 
 
 The processed output will be placed, by default, in the `proc` directory. 
 
