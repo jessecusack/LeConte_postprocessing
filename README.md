@@ -6,7 +6,7 @@ netcdf files.
 
 ## How to run the code
 
-Install [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
+Install the python package manager [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
 
 
 [Clone](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository) this repository. 
@@ -28,6 +28,24 @@ python -W ignore sep2018.py
 where the `-W ignore` option specifies that warnings should not be displayed. This is not strictly necessary and the code will run without it.
 
 The processed output will be placed, by default, in the `proc` directory. 
+
+The processing scripts can accept arguments, for example,
+```
+python sep2018.py --help
+```
+will display the optional argument list. You should see something like,
+```
+usage: sep2018.py [-h] [-d DIRECTORY] [-a ADCP] [-s SAVE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d DIRECTORY, --dir DIRECTORY
+                        path to LeConte Dropbox directory
+  -a ADCP, --adcp ADCP  path to LeConte ADCP directory
+  -s SAVE, --save SAVE  path to save processed data
+```
+which indicates that you can specify differet paths to the data and save directories. This might be useful if the defaults fail on your system. 
+
 
 <!-- ## How to develop the code
 
