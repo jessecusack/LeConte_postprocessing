@@ -9,11 +9,11 @@ netcdf files.
 Install the python package manager [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
 
 
-[Clone](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository) this repository (you need a [github.com](github.com) account).
+[Clone](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository) this repository.
 ```
-git clone https://github.com/jessecusack/LeConte_postprocessing
+git clone https://github.com/jessecusack/LeConte_postprocessing.git
 ```
-The above can also be achieved more easily with ssh keys (recommended) but requires some [initial setup](https://jdblischak.github.io/2014-09-18-chicago/novice/git/05-sshkeys.html). 
+The above can also be achieved with ssh keys but requires some [initial setup](https://jdblischak.github.io/2014-09-18-chicago/novice/git/05-sshkeys.html) (recommended, but you need a [github.com](github.com) account). Alternatively, download the repository directly from github.
 
 Using the terminal from within the downloaded repository, install the conda environment.
 ```
@@ -33,7 +33,7 @@ cd code
 python -W ignore sep2018.py
 ```
 
-where the `-W ignore` option specifies that warnings should not be displayed. This is not strictly necessary but the text output to terminal may be cleaner. Note that currently, the code makes some assumptions about where the Dropbox folder is located, but different paths can be specified if this fails. 
+where the `-W ignore` option specifies that warnings should not be displayed. This is not strictly necessary but the text output to terminal may be cleaner. The code makes some assumptions about where the Dropbox folder is located, but different paths can be specified if this fails. 
 
 The processed output will be placed, by default, in the `proc` directory. 
 
@@ -54,7 +54,11 @@ optional arguments:
   -sd SAVE, --save SAVE
                         path to save processed data
 ```
-which indicates that you can specify differet paths to the data and save directories. This might be useful if the defaults fail on your computer. 
+which indicates that you can specify differet paths to the data and save directories, e.g.
+```
+python sep2018.py -ad some/path/to/adcp_final
+```
+This might be useful if the defaults fail on your computer.
 
 <!-- ## How to develop the code
 
