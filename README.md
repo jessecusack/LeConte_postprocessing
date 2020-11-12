@@ -43,14 +43,16 @@ python sep2018.py --help
 ```
 will display the optional argument list. You should see something like,
 ```
-usage: sep2018.py [-h] [-d DIRECTORY] [-a ADCP] [-s SAVE]
+usage: sep2018.py [-h] [-ld LECONTE] [-ad ADCP] [-sd SAVE]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -d DIRECTORY, --dir DIRECTORY
+  -ld LECONTE, --leconte LECONTE
                         path to LeConte Dropbox directory
-  -a ADCP, --adcp ADCP  path to LeConte ADCP directory
-  -s SAVE, --save SAVE  path to save processed data
+  -ad ADCP, --adcp ADCP
+                        path to LeConte ADCP directory
+  -sd SAVE, --save SAVE
+                        path to save processed data
 ```
 which indicates that you can specify differet paths to the data and save directories. This might be useful if the defaults fail on your computer. 
 

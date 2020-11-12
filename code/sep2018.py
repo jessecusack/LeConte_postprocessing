@@ -1,5 +1,4 @@
 import os
-from argparse import ArgumentParser
 
 import gsw
 import mat73
@@ -10,52 +9,17 @@ import xarray as xr
 from tqdm import tqdm
 
 import utils
+import clargs
 
-parser = ArgumentParser()
-parser.add_argument(
-    "-d",
-    "--dir",
-    dest="directory",
-    default=os.path.expanduser("~/Dropbox/LeConte"),
-    help="path to LeConte Dropbox directory",
-)
-parser.add_argument(
-    "-a",
-    "--adcp",
-    dest="adcp",
-    default=os.path.expanduser("~/Dropbox/LeConte_ADCP_final"),
-    help="path to LeConte ADCP directory",
-)
-parser.add_argument(
-    "-s", "--save", dest="save", default="../proc", help="path to save processed data"
-)
-# parser.add_argument("-q", "--quiet",
-#                     action="store_false", dest="verbose", default=False,
-#                     help="don't print status messages to stdout")
 
-args = parser.parse_args()
-lcroot = args.directory
-saroot = args.adcp
-sd = args.save
+# Parse command line arguments
+args = clargs.gen_parser().parse_args()
+# Check the directories to make sure they exist.
+clargs.check_args(args)
 
-if not os.path.exists(lcroot):
-    raise ValueError(
-        "Specified LeConte data directory does not exist: '{}'".format(lcroot)
-    )
-else:
-    print("LeConte path '{}' exists.".format(lcroot))
-
-if not os.path.exists(saroot):
-    raise ValueError(
-        "Specified LeConte ADCP directory does not exist: '{}'".format(saroot)
-    )
-else:
-    print("LeConte ADCP path '{}' exists.".format(saroot))
-
-if not os.path.exists(sd):
-    raise ValueError("Specified save directory does not exist: '{}'".format(sd))
-else:
-    print("Save path '{}' exists.".format(sd))
+lcroot = args.leconte
+adroot = args.adcp
+sdroot = args.save
 
 data_files = munch.Munch()
 # VMP data
@@ -67,7 +31,7 @@ data_files.vmp_sections = os.path.join(
     lcroot, "Data/ocean/september2018/processed/vmp/vmp_sections_Sept2018.mat"
 )
 # SADCP data
-data_files.sadcp = os.path.join(saroot, "2018_09/AmberAnne/SADCP_201809.mat")
+data_files.sadcp = os.path.join(adroot, "2018_09/AmberAnne/SADCP_201809.mat")
 
 # Check all data files exist
 for key in data_files:
@@ -216,8 +180,8 @@ vmp_coords = {
 
 vmp_ds = xr.Dataset(vmp_datavars, vmp_coords)
 file = "vmp_sep_2018.nc"
-print("Saving to '{}'".format(os.path.join(sd, file)))
-vmp_ds.to_netcdf(os.path.join(sd, file))
+print("Saving to '{}'".format(os.path.join(sdroot, file)))
+vmp_ds.to_netcdf(os.path.join(sdroot, file))
 
 ############### COMBINED ################
 print("Processing combined VMP-SADCP")
@@ -312,5 +276,5 @@ combo_ds = xr.Dataset(
 )
 
 file = "combo_sep_2018.nc"
-print("Saving to '{}'".format(os.path.join(sd, file)))
-combo_ds.to_netcdf(os.path.join(sd, file))
+print("Saving to '{}'".format(os.path.join(sdroot, file)))
+combo_ds.to_netcdf(os.path.join(sdroot, file))
