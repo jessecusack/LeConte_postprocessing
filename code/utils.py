@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -175,3 +176,18 @@ def nan_interp(x, xp, fp, left=None, right=None, axis=0, squeeze_me=True):
         return np.squeeze(y)
     else:
         return y
+
+
+def check_files(files):
+    """
+    Assumes that files is a dict or Munch object containing full file paths.
+    """
+    for key in files:
+        # Skip check for non-string objects.
+        if type(files[key]) != str:
+            continue
+
+        if not os.path.isfile(files[key]):
+            raise ValueError("{} file not found: {}".format(key, files[key]))
+        else:
+            print("Found {} at '{}'.".format(key, files[key]))
