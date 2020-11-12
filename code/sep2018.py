@@ -3,16 +3,19 @@ import os
 import gsw
 import mat73
 import mixsea as mx
-import munch
 import numpy as np
 import xarray as xr
+import yaml
+from munch import Munch, munchify
 from tqdm import tqdm
 
 import clargs
 import utils
 
-# Parse command line arguments
-args = clargs.gen_parser().parse_args()
+############### PRELIMINARIES ################
+# Parse command line arguments, convert to dict with 'vars' and then
+# to Munch (similar to dict but better)
+args = munchify(vars(clargs.gen_parser().parse_args()))
 # Check the directories to make sure they exist.
 clargs.check_args(args)
 
@@ -20,35 +23,40 @@ lcroot = args.leconte
 adroot = args.adcp
 sdroot = args.save
 
-data_files = munch.Munch()
-# VMP data
-data_files.vmp = os.path.join(
-    lcroot, "Data/ocean/september2018/processed/vmp/vmp_combo.mat"
-)
+# Grab the data file paths from the yml file.
+with open("file_paths.yml", "r") as f:
+    try:
+        all_files = yaml.safe_load(f)
+    except yaml.YAMLError as exc:
+        print(exc)
+
+# Only need September 2018 file info.
+file_info = munchify(all_files["sep2018"])
+files = Munch()
+
+# Make full file paths (root dir + file)
+# VMP
+files.vmp = os.path.join(args[file_info.vmp.root], file_info.vmp.path)
 # VMP sections
-data_files.vmp_sections = os.path.join(
-    lcroot, "Data/ocean/september2018/processed/vmp/vmp_sections_Sept2018.mat"
+files.vmp_sections = os.path.join(
+    args[file_info.vmp_sections.root], file_info.vmp_sections.path
 )
 # SADCP data
-data_files.sadcp = os.path.join(adroot, "2018_09/AmberAnne/SADCP_201809.mat")
+files.sadcp = os.path.join(args[file_info.sadcp.root], file_info.sadcp.path)
 
-# Check all data files exist
-for key in data_files:
-    if not os.path.isfile(data_files[key]):
-        raise ValueError("{} file not found: {}".format(key, data_files[key]))
-    else:
-        print("Found {} at '{}'.".format(key, data_files[key]))
+utils.check_files(files)
 
+############### LOAD DATA ################
 print("Loading data. (---> This may trigger Dropbox download <---)")
 print("Loading sections.")
-secs = utils.loadmat(data_files.vmp_sections, check_arrays=True, mat_dtype=True)["vmp"]
-secs = np.array([munch.munchify(ds) for ds in secs])
+secs = utils.loadmat(files.vmp_sections, check_arrays=True, mat_dtype=True)["vmp"]
+secs = np.array([munchify(ds) for ds in secs])
 print("Loading VMP.")
-ds = utils.loadmat(data_files.vmp, check_arrays=True, mat_dtype=True)
-vmp = munch.munchify(ds["vmp"])
-gps = munch.munchify(ds["gps"])
+ds = utils.loadmat(files.vmp, check_arrays=True, mat_dtype=True)
+vmp = munchify(ds["vmp"])
+gps = munchify(ds["gps"])
 print("Loading SADCP.")
-sadcp = munch.munchify(mat73.loadmat(data_files.sadcp)["adcp"])
+sadcp = munchify(mat73.loadmat(files.sadcp)["adcp"])
 
 ############### VMP ################
 print("Processing VMP")
