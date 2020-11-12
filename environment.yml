@@ -1,0 +1,18 @@
+name: lcpp
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=3
+- numpy
+- pip
+- scipy
+- xarray
+- gsw
+- netcdf4
+- tqdm
+- munch
+- h5py
+- pip:
+    - mixsea
+    - mat73==0.41
