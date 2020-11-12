@@ -1,0 +1,15 @@
+# The paths to all the data files to be processed are specified here
+# and are catogorised by campaign and instrument. The 'root' param specifies the base folder,
+# such as the LeConte directory using 'leconte' or the LeConte_ADCP_final directory
+# using the key 'adcp'.
+
+sep2018:
+    vmp: 
+        path: "Data/ocean/september2018/processed/vmp/vmp_combo.mat"
+        root: "leconte"
+    vmp_sections: 
+        path: "Data/ocean/september2018/processed/vmp/vmp_sections_Sept2018.mat"
+        root: "leconte"
+    sadcp: 
+        path: "2018_09/AmberAnne/SADCP_201809.mat"
+        root: "adcp"
