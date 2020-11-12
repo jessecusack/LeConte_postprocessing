@@ -13,6 +13,7 @@ dependencies:
 - tqdm
 - munch
 - h5py
+- pyyaml
 - pip:
     - mixsea
     - mat73==0.41
