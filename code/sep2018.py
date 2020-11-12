@@ -8,9 +8,8 @@ import numpy as np
 import xarray as xr
 from tqdm import tqdm
 
-import utils
 import clargs
-
+import utils
 
 # Parse command line arguments
 args = clargs.gen_parser().parse_args()

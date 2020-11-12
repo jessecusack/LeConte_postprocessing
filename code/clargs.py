@@ -1,5 +1,5 @@
-from argparse import ArgumentParser
 import os
+from argparse import ArgumentParser
 
 
 def gen_parser():
@@ -19,7 +19,11 @@ def gen_parser():
         help="path to LeConte ADCP directory",
     )
     parser.add_argument(
-        "-sd", "--save", dest="save", default="../proc", help="path to save processed data"
+        "-sd",
+        "--save",
+        dest="save",
+        default="../proc",
+        help="path to save processed data",
     )
     # parser.add_argument("-q", "--quiet",
     #                     action="store_false", dest="verbose", default=False,
@@ -33,19 +37,17 @@ def check_args(args):
 
     if not os.path.exists(args.leconte):
         raise ValueError(
-            "Specified LeConte data directory does not exist: '{}'".format(args.leconte)
+            "LeConte data directory does not exist: '{}'".format(args.leconte)
         )
     else:
-        print("LeConte path '{}' exists.".format(args.leconte))
+        print("LeConte data path '{}' exists.".format(args.leconte))
 
     if not os.path.exists(args.adcp):
-        raise ValueError(
-            "Specified LeConte ADCP directory does not exist: '{}'".format(args.adcp)
-        )
+        raise ValueError("ADCP directory does not exist: '{}'".format(args.adcp))
     else:
-        print("LeConte ADCP path '{}' exists.".format(args.adcp))
+        print("ADCP path '{}' exists.".format(args.adcp))
 
     if not os.path.exists(args.save):
-        raise ValueError("Specified save directory does not exist: '{}'".format(args.save))
+        raise ValueError("Save directory does not exist: '{}'".format(args.save))
     else:
         print("Save path '{}' exists.".format(args.save))
