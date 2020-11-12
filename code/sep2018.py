@@ -24,7 +24,7 @@ parser.add_argument(
     "--adcp",
     dest="adcp",
     default=os.path.expanduser("~/Dropbox/LeConte_ADCP_final"),
-    help="path to LeConte Dropbox directory",
+    help="path to LeConte ADCP directory",
 )
 parser.add_argument(
     "-s", "--save", dest="save", default="../proc", help="path to save processed data"
