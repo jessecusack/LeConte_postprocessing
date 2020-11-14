@@ -4,7 +4,7 @@
 # using the key 'adcp'.
 
 sep2018:
-    vmp: 
+    vmp:  # Note this also contains CTD
         path: "Data/ocean/september2018/processed/vmp/vmp_combo.mat"
         root: "leconte"
     vmp_sections: 
@@ -13,3 +13,14 @@ sep2018:
     sadcp: 
         path: "2018_09/AmberAnne/SADCP_201809.mat"
         root: "adcp"
+
+aug2016:
+    vmp:
+        path: "Data/ocean/august2016/VMP/combined_VMP.mat"
+        root: "leconte"
+    sadcp:
+        path: "Data/ocean/august2016/SADCP/processed/Steller_all.mat"
+        root: "leconte"
+    ctd:
+        path: "Data/ocean/august2016/CTD_Stellar/AllCTD.mat"
+        root: "leconte"

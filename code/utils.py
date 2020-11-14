@@ -235,3 +235,11 @@ def load_parameters(parameter_file="processing_parameters.yml"):
             print(exc)
             
     return munchify(params)
+
+
+def closest_index(x, a):
+    """
+    x: value
+    a: array
+    """
+    return np.argmin(np.abs(x - a))
