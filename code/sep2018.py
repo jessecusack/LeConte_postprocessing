@@ -6,7 +6,7 @@ import mixsea as mx
 import numpy as np
 import xarray as xr
 import yaml
-from munch import Munch, munchify
+from munch import munchify
 from tqdm import tqdm
 
 import clargs
@@ -19,32 +19,9 @@ args = munchify(vars(clargs.gen_parser().parse_args()))
 # Check the directories to make sure they exist.
 clargs.check_args(args)
 
-lcroot = args.leconte
-adroot = args.adcp
 sdroot = args.save
 
-# Grab the data file paths from the yml file.
-with open("file_paths.yml", "r") as f:
-    try:
-        all_files = yaml.safe_load(f)
-    except yaml.YAMLError as exc:
-        print(exc)
-
-# Only need September 2018 file info.
-file_info = munchify(all_files["sep2018"])
-files = Munch()
-
-# Make full file paths (root dir + file)
-# VMP
-files.vmp = os.path.join(args[file_info.vmp.root], file_info.vmp.path)
-# VMP sections
-files.vmp_sections = os.path.join(
-    args[file_info.vmp_sections.root], file_info.vmp_sections.path
-)
-# SADCP data
-files.sadcp = os.path.join(args[file_info.sadcp.root], file_info.sadcp.path)
-
-utils.check_files(files)
+files = utils.find_files(args, "sep2018")
 
 ############### LOAD DATA ################
 print("Loading data. (---> This may trigger Dropbox download <---)")

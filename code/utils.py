@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import scipy.io as io
+import yaml
+from munch import Munch, munchify
 
 
 def loadmat(filename, check_arrays=False, **kwargs):
@@ -191,3 +193,31 @@ def check_files(files):
             raise ValueError("{} file not found: {}".format(key, files[key]))
         else:
             print("Found {} at '{}'.".format(key, files[key]))
+
+            
+def find_files(args, dataset, paths_file="file_paths.yml"):
+    """
+    args: command line args
+    dataset: yaml file path parameter key e.g. "sep2018"
+    
+    """
+    
+    # Grab the data file paths from the yml file.
+    with open(paths_file, "r") as f:
+        try:
+            all_files = yaml.safe_load(f)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    # Grab file path info for the specified dataset
+    file_info = munchify(all_files[dataset])
+    files = Munch()
+    
+    # Join root directory specified by command line arguments with path
+    # specified in the yaml file.
+    for key in file_info:
+        files[key] = os.path.join(args[file_info[key].root], file_info[key].path)
+
+    check_files(files)
+    
+    return files
