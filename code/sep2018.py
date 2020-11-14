@@ -5,7 +5,6 @@ import mat73
 import mixsea as mx
 import numpy as np
 import xarray as xr
-import yaml
 from munch import munchify
 from tqdm import tqdm
 
@@ -23,6 +22,8 @@ sdroot = args.save
 
 files = utils.find_files(args, "sep2018")
 
+params = utils.load_parameters()
+
 ############### LOAD DATA ################
 print("Loading data. (---> This may trigger Dropbox download <---)")
 print("Loading sections.")
@@ -37,8 +38,8 @@ sadcp = munchify(mat73.loadmat(files.sadcp)["adcp"])
 
 ############### VMP ################
 print("Processing VMP")
-bin_width = 20.0  # Adiabatic levelling bin
-gam = 0.2  # Mixing efficiency
+bin_width = params.ctd.adiabatic_level_bin_width 
+gam = params.vmp.mixing_efficiency 
 
 t = vmp.JAC_T
 C = vmp.JAC_C

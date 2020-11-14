@@ -200,6 +200,8 @@ def find_files(args, dataset, paths_file="file_paths.yml"):
     args: command line args
     dataset: yaml file path parameter key e.g. "sep2018"
     
+    returns files as Munch
+    
     """
     
     # Grab the data file paths from the yml file.
@@ -221,3 +223,15 @@ def find_files(args, dataset, paths_file="file_paths.yml"):
     check_files(files)
     
     return files
+
+
+def load_parameters(parameter_file="processing_parameters.yml"):
+    """Load processing parameters into Munch."""
+    
+    with open(parameter_file, "r") as f:
+        try:
+            params = yaml.safe_load(f)
+        except yaml.YAMLError as exc:
+            print(exc)
+            
+    return munchify(params)

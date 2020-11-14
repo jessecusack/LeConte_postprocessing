@@ -1,0 +1,9 @@
+# Processing parameters should be specified here in an informative way
+
+vmp:
+    mixing_efficiency: 0.2 
+    
+ctd:
+    # Bin width for the adiabatic levelling method (dbar)
+    adiabatic_level_bin_width: 20.  
+
