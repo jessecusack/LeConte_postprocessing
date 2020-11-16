@@ -194,16 +194,16 @@ def check_files(files):
         else:
             print("Found {} at '{}'.".format(key, files[key]))
 
-            
+
 def find_files(args, dataset, paths_file="file_paths.yml"):
     """
     args: command line args
     dataset: yaml file path parameter key e.g. "sep2018"
-    
+
     returns files as Munch
-    
+
     """
-    
+
     # Grab the data file paths from the yml file.
     with open(paths_file, "r") as f:
         try:
@@ -214,26 +214,26 @@ def find_files(args, dataset, paths_file="file_paths.yml"):
     # Grab file path info for the specified dataset
     file_info = munchify(all_files[dataset])
     files = Munch()
-    
+
     # Join root directory specified by command line arguments with path
     # specified in the yaml file.
     for key in file_info:
         files[key] = os.path.join(args[file_info[key].root], file_info[key].path)
 
     check_files(files)
-    
+
     return files
 
 
 def load_parameters(parameter_file="processing_parameters.yml"):
     """Load processing parameters into Munch."""
-    
+
     with open(parameter_file, "r") as f:
         try:
             params = yaml.safe_load(f)
         except yaml.YAMLError as exc:
             print(exc)
-            
+
     return munchify(params)
 
 

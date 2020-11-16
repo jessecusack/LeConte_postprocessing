@@ -8,6 +8,7 @@ import xarray as xr
 from munch import munchify
 from tqdm import tqdm
 
+import ADCP
 import clargs
 import utils
 
@@ -38,8 +39,8 @@ sadcp = munchify(mat73.loadmat(files.sadcp)["adcp"])
 
 ############### VMP ################
 print("Processing VMP")
-bin_width = params.ctd.adiabatic_level_bin_width 
-gam = params.vmp.mixing_efficiency 
+bin_width = params.ctd.adiabatic_level_bin_width
+gam = params.vmp.mixing_efficiency
 
 t = vmp.JAC_T
 C = vmp.JAC_C
@@ -170,77 +171,21 @@ vmp_ds.to_netcdf(os.path.join(sdroot, file))
 
 ############### COMBINED ################
 print("Processing combined VMP-SADCP")
-time_win = 60.0  # Time window width in seconds
-dt = time_win / (2 * 86400)  # Half window in matlab datetime units
-vmax = 2.0  # Velocity (m/s) threshold above which we remove data
-depth_min = 4.0  # Minimum range of the adcp (m) (currently a guess)
 
-ranges = sadcp.config.ranges
-
-u = np.full_like(vmp.salt, np.nan)
-v = np.full_like(vmp.salt, np.nan)
-w = np.full_like(vmp.salt, np.nan)
-lon = np.full_like(vmp.time, np.nan)
-lat = np.full_like(vmp.time, np.nan)
-range_bottom = np.full_like(vmp.time, np.nan)
-
-print("Estimating velocity at VMP stations.")
-for i in tqdm(range(vmp.time.size)):
-
-    time = vmp.time[i]
-    use = (sadcp.mtime > (time - dt)) & (sadcp.mtime < (time + dt))
-
-    if not use.any():
-        continue
-
-    # Cut out selected time
-    u_ = sadcp.vel[:, 0, use]
-    v_ = sadcp.vel[:, 1, use]
-    w_ = sadcp.vel[:, 2, use]
-    lon_ = sadcp.gps.lon[use]
-    lat_ = sadcp.gps.lat[use]
-
-    # Remove bottom
-    range_bottom[i] = sadcp.bt_range[:, use].min()
-    below_bottom = ranges > range_bottom[i]
-
-    u_[below_bottom, :] = np.nan
-    v_[below_bottom, :] = np.nan
-    w_[below_bottom, :] = np.nan
-
-    # Remove spurious velocities
-    spurious = (np.abs(u_) > vmax) | (np.abs(v_) > vmax) | (np.abs(w_) > vmax)
-    u_[spurious] = np.nan
-    v_[spurious] = np.nan
-    w_[spurious] = np.nan
-
-    # Average velocity
-    ua = np.nanmean(u_, axis=1)
-    va = np.nanmean(v_, axis=1)
-    wa = np.nanmean(w_, axis=1)
-
-    # Interpolate velocity to finer grid
-    ui = utils.nan_interp(vmp.depth, ranges, ua)
-    vi = utils.nan_interp(vmp.depth, ranges, va)
-    wi = utils.nan_interp(vmp.depth, ranges, wa)
-
-    # Remove velocity data out of range
-    valid_vmp = np.isfinite(vmp.eps1[:, i])
-    out_of_range = (
-        (vmp.depth < 4.0)
-        | (vmp.depth > range_bottom[i])
-        | (vmp.depth > vmp.depth[valid_vmp].max())
-    )
-    ui[out_of_range] = np.nan
-    vi[out_of_range] = np.nan
-    wi[out_of_range] = np.nan
-
-    # Fill data
-    lon[i] = np.nanmean(lon_)
-    lat[i] = np.nanmean(lat_)
-    u[:, i] = ui
-    v[:, i] = vi
-    w[:, i] = wi
+print("Interpolating velocity to VMP stations.")
+mask = np.isfinite(vmp.JAC_T)
+u, v, w, lon, lat, range_bottom, nav = ADCP.interp_ADCP_2D(
+    sadcp,
+    mask,
+    vmp.depth,
+    vmp.lon,
+    vmp.lat,
+    vmp.time,
+    time_win=360.0,
+    rmax=15.0,
+    vmax=2.0,
+    range_min=4.0,
+)
 
 
 sadcp_datavars = {
@@ -248,11 +193,12 @@ sadcp_datavars = {
     "v": (["depth", "profile"], v, {"Variable": "Eastward velocity"}),
     "w": (["depth", "profile"], u, {"Variable": "Vertical velocity"}),
     "range_bottom": (["profile"], range_bottom, {"Variable": "Range to bottom"}),
+    "nav": (["profile"], nav, {"Variable": "Number of ADCP profiles in average."}),
 }
 
 sadcp_coords = {
-    "lon_sadcp": (["profile"], lon),
-    "lat_sadcp": (["profile"], lat),
+    "lon_sadcp": (["profile"], lon, {"Variable": "Mean longitude of SADCP data"}),
+    "lat_sadcp": (["profile"], lat, {"Variable": "Mean latitude of SADCP data"}),
 }
 
 
