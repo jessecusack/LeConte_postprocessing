@@ -1,0 +1,26 @@
+name: lcpp-dev
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=3
+- matplotlib
+- numpy
+- pip
+- scipy
+- xarray
+- ipykernel
+- gsw
+- netcdf4
+- dask
+- cmocean
+- tqdm
+- cartopy
+- black
+- isort
+- munch
+- h5py
+- pylint
+- pip:
+    - mixsea
+    - mat73==0.41
