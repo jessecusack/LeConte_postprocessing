@@ -203,17 +203,14 @@ def interp_ADCP(
     w_[spurious] = np.nan
 
     # Average velocity
-    ua = np.nanmean(u_, axis=1)
-    va = np.nanmean(v_, axis=1)
-    wa = np.nanmean(w_, axis=1)
+    u = np.nanmean(u_, axis=1)
+    v = np.nanmean(v_, axis=1)
+    w = np.nanmean(w_, axis=1)
 
     # Interpolate velocity to finer grid
-    valid = np.isfinite(ua)
-    u = np.interp(depth, ranges[valid], ua[valid])
-    valid = np.isfinite(va)
-    v = np.interp(depth, ranges[valid], va[valid])
-    valid = np.isfinite(wa)
-    w = np.interp(depth, ranges[valid], wa[valid])
+    u = interp_vel(depth, ranges, u)
+    v = interp_vel(depth, ranges, v)
+    w = interp_vel(depth, ranges, w)
 
     # Remove velocity data out of range
     out_of_range = (depth < range_min) | (depth > range_bottom)
@@ -228,6 +225,16 @@ def interp_ADCP(
     return u, v, w, lonm, latm, range_bottom, n
 
 
+def interp_vel(depth, ranges, vel):
+    """Interpolation with NaN handling."""
+    valid = np.isfinite(vel)
+    if any(valid):
+        vel_out = np.interp(depth, ranges[valid], vel[valid])
+    else:
+        vel_out = np.full_like(depth, np.nan)
+    return vel_out
+
+
 def check_record(sadcp, time, dt):
     """Deal with records that were stored as structure arrays."""
 
@@ -240,7 +247,7 @@ def check_record(sadcp, time, dt):
 
     # Check each individual sadcp structure to find data.
     nd = np.zeros((ns))  # Number of data points in each sadcp structure
-    for j in range():
+    for j in range(ns):
         use = (sadcp.mtime[j] > (time - dt)) & (sadcp.mtime[j] < (time + dt))
         if use.any():
             nd[j] = use.sum()

@@ -9,6 +9,7 @@ import yaml
 from munch import munchify
 from tqdm import tqdm
 
+import ADCP
 import clargs
 import utils
 
@@ -32,14 +33,14 @@ vmp = munchify(utils.loadmat(files.vmp, check_arrays=True, mat_dtype=True))
 print("Loading CTD.")
 ctds = utils.loadmat(files.ctd, check_arrays=True, mat_dtype=True)["ctd"]
 ctds = [munchify(ctd) for ctd in ctds]
-# print("Loading SADCP.")
-# sadcps = munchify(mat73.loadmat(files.sadcp)["adcp"])
+print("Loading SADCP. (Warning: large file ~ 1 GB.)")
+sadcp = munchify(mat73.loadmat(files.sadcp)["adcp"])
 
 ############### VMP ################
 print("Processing VMP")
-ctd = ctds[6]  # This is the ctd data corresponding to the VMP. 
-bin_width = params.ctd.adiabatic_level_bin_width 
-gam = params.vmp.mixing_efficiency 
+ctd = ctds[6]  # This is the ctd data corresponding to the VMP.
+bin_width = params.ctd.adiabatic_level_bin_width
+gam = params.vmp.mixing_efficiency
 
 ctd = ctds[6]
 
@@ -57,22 +58,22 @@ eps = np.full_like(t, np.nan)
 p = gsw.p_from_z(-depth, np.mean(lat))
 
 for ic in range(time.size):
-    
+
     iv = utils.closest_index(time[ic], vmp.Tm)
-    
+
     pv = vmp.Pm[:, iv]
     ev = vmp.Em[:, iv]
-    
+
     dp = np.nanmean(np.diff(pv))
-    
+
     pmax = np.nanmax(pv)
     pmin = np.nanmin(pv)
-    
+
     use = np.isfinite(pv) & np.isfinite(ev)
-    
+
     # Do the interpolation in log space because eps varies over
     # so many orders of magnitude.
-    eps[:, ic] = 10**np.interp(p, pv[use], np.log10(ev[use]))
+    eps[:, ic] = 10 ** np.interp(p, pv[use], np.log10(ev[use]))
     # Scrub out of range data
     eps[(p > pmax) | (p < pmin), ic] = np.nan
 
@@ -130,9 +131,7 @@ vmp_datavars = {
     "Kv": (
         ["depth", "profile"],
         Kv,
-        {
-            "Variable": "Turbulent diffusivity"
-        },
+        {"Variable": "Turbulent diffusivity"},
     ),
     "sig0": (
         ["depth", "profile"],
@@ -160,20 +159,62 @@ vmp_coords = {
     "time": (["profile"], utils.datenum_to_datetime(time)),
     "lon": (["profile"], lon),
     "lat": (["profile"], lat),
-#     "cast": (["profile"], cast.astype(int)),
+    #     "cast": (["profile"], cast.astype(int)),
     "p": (["depth"], p),
     "p_mid": (["depth_mid"], p_mid[:, 0]),
-#     "section": (["section"], section, {"Variable": "Section number"}),
-#     "insection": (["section", "profile"], insection, {"Variable": "Section masks"}),
-#     "time_start": (["section"], time_start, {"Variable": "Section start time"}),
-#     "time_end": (["section"], time_end, {"Variable": "Section end time"}),
-#     "lon_start": (["section"], lon_start, {"Variable": "Section start longitude"}),
-#     "lon_end": (["section"], lon_end, {"Variable": "Section end longitude"}),
-#     "lat_start": (["section"], lat_start, {"Variable": "Section start latitude"}),
-#     "lat_end": (["section"], lat_end, {"Variable": "Section end latitude"}),
+    #     "section": (["section"], section, {"Variable": "Section number"}),
+    #     "insection": (["section", "profile"], insection, {"Variable": "Section masks"}),
+    #     "time_start": (["section"], time_start, {"Variable": "Section start time"}),
+    #     "time_end": (["section"], time_end, {"Variable": "Section end time"}),
+    #     "lon_start": (["section"], lon_start, {"Variable": "Section start longitude"}),
+    #     "lon_end": (["section"], lon_end, {"Variable": "Section end longitude"}),
+    #     "lat_start": (["section"], lat_start, {"Variable": "Section start latitude"}),
+    #     "lat_end": (["section"], lat_end, {"Variable": "Section end latitude"}),
 }
 
 vmp_ds = xr.Dataset(vmp_datavars, vmp_coords)
 file = "vmp_aug_2016.nc"
 print("Saving to '{}'".format(os.path.join(sdroot, file)))
 vmp_ds.to_netcdf(os.path.join(sdroot, file))
+
+
+############### COMBINED ################
+print("Processing combined VMP-SADCP")
+
+print("Interpolating velocity to VMP stations.")
+mask = np.isfinite(t)
+u, v, w, lon, lat, range_bottom, nav = ADCP.interp_ADCP_2D(
+    sadcp,
+    mask,
+    depth,
+    lon,
+    lat,
+    time,
+    time_win=360.0,
+    rmax=15.0,
+    vmax=2.0,
+    range_min=4.0,
+)
+
+
+sadcp_datavars = {
+    "u": (["depth", "profile"], u, {"Variable": "Northward velocity"}),
+    "v": (["depth", "profile"], v, {"Variable": "Eastward velocity"}),
+    "w": (["depth", "profile"], u, {"Variable": "Vertical velocity"}),
+    "range_bottom": (["profile"], range_bottom, {"Variable": "Range to bottom"}),
+    "nav": (["profile"], nav, {"Variable": "Number of ADCP profiles in average."}),
+}
+
+sadcp_coords = {
+    "lon_sadcp": (["profile"], lon, {"Variable": "Mean longitude of SADCP data"}),
+    "lat_sadcp": (["profile"], lat, {"Variable": "Mean latitude of SADCP data"}),
+}
+
+
+combo_ds = xr.Dataset(
+    {**vmp_datavars, **sadcp_datavars}, {**vmp_coords, **sadcp_coords}
+)
+
+file = "combo_aug_2016.nc"
+print("Saving to '{}'".format(os.path.join(sdroot, file)))
+combo_ds.to_netcdf(os.path.join(sdroot, file))
