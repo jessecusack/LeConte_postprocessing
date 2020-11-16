@@ -5,7 +5,6 @@ import mat73
 import mixsea as mx
 import numpy as np
 import xarray as xr
-import yaml
 from munch import munchify
 from tqdm import tqdm
 
@@ -180,6 +179,10 @@ vmp_ds.to_netcdf(os.path.join(sdroot, file))
 
 ############### COMBINED ################
 print("Processing combined VMP-SADCP")
+time_win = params.sadcp.time_window
+rmax = params.sadcp.rmax
+vmax = params.sadcp.vmax
+range_min = params.sadcp.range_min
 
 print("Interpolating velocity to VMP stations.")
 mask = np.isfinite(t)
@@ -190,10 +193,10 @@ u, v, w, lon, lat, range_bottom, nav = ADCP.interp_ADCP_2D(
     lon,
     lat,
     time,
-    time_win=360.0,
-    rmax=15.0,
-    vmax=2.0,
-    range_min=4.0,
+    time_win=time_win,
+    rmax=rmax,
+    vmax=vmax,
+    range_min=range_min,
 )
 
 

@@ -5,5 +5,14 @@ vmp:
     
 ctd:
     # Bin width for the adiabatic levelling method (dbar)
-    adiabatic_level_bin_width: 20.  
-
+    adiabatic_level_bin_width: 20.
+    
+sadcp:
+    # Search time window for interpolating ADCP data to position of CTD/VMP profile (s)
+    time_window: 360.0
+    # Search distance radius (m)
+    rmax: 15.0
+    # Maximum allowed velocity (m/s)
+    vmax: 2.0
+    # Minimum allowed range (m)
+    range_min: 4.0

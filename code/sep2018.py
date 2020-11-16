@@ -171,6 +171,10 @@ vmp_ds.to_netcdf(os.path.join(sdroot, file))
 
 ############### COMBINED ################
 print("Processing combined VMP-SADCP")
+time_win = params.sadcp.time_window
+rmax = params.sadcp.rmax
+vmax = params.sadcp.vmax
+range_min = params.sadcp.range_min
 
 print("Interpolating velocity to VMP stations.")
 mask = np.isfinite(vmp.JAC_T)
@@ -181,10 +185,10 @@ u, v, w, lon, lat, range_bottom, nav = ADCP.interp_ADCP_2D(
     vmp.lon,
     vmp.lat,
     vmp.time,
-    time_win=360.0,
-    rmax=15.0,
-    vmax=2.0,
-    range_min=4.0,
+    time_win=time_win,
+    rmax=rmax,
+    vmax=vmax,
+    range_min=range_min,
 )
 
 
