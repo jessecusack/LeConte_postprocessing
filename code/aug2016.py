@@ -13,11 +13,8 @@ import clargs
 import utils
 
 ############### PRELIMINARIES ################
-# Parse command line arguments, convert to dict with 'vars' and then
-# to Munch (similar to dict but better)
-args = munchify(vars(clargs.gen_parser().parse_args()))
-# Check the directories to make sure they exist.
-clargs.check_args(args)
+# Parse command line arguments
+args = clargs.parse_check_args()
 
 sdroot = args.save
 

@@ -1,5 +1,6 @@
 import os
 from argparse import ArgumentParser
+from munch import munchify
 
 
 def gen_parser():
@@ -51,3 +52,11 @@ def check_args(args):
         raise ValueError("Save directory does not exist: '{}'".format(args.save))
     else:
         print("Save path '{}' exists.".format(args.save))
+
+        
+def parse_check_args():
+    # Combine parsing and checking.
+    parser = gen_parser()
+    args = munchify(vars(parser.parse_args()))
+    check_args(args)
+    return args
