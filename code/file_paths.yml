@@ -24,3 +24,16 @@ aug2016:
     ctd:
         path: "Data/ocean/august2016/CTD_Stellar/AllCTD.mat"
         root: "leconte"
+        
+        
+bathymetry:
+    sep2018:
+        path: "Data/bathy/combinedbathy/bathy_2018sep_2m.mat"
+        root: "leconte"
+    sep2017:
+        path: "Data/bathy/combinedbathy/bathy_2017may_2m.mat"
+        root: "leconte"
+    aug2016:
+        path: "Data/bathy/combinedbathy/bathy_2016aug_4m.mat"
+        root: "leconte"
+    
