@@ -1,5 +1,6 @@
 import os
 from argparse import ArgumentParser
+
 from munch import munchify
 
 
@@ -53,7 +54,7 @@ def check_args(args):
     else:
         print("Save path '{}' exists.".format(args.save))
 
-        
+
 def parse_check_args():
     # Combine parsing and checking.
     parser = gen_parser()
