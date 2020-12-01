@@ -12,6 +12,7 @@ import ADCP
 import clargs
 import CTD
 import utils
+import VMP
 
 ############### PRELIMINARIES ################
 # Parse command line arguments
@@ -88,11 +89,7 @@ for i in tqdm(range(time.size)):
 # Max valid depth
 depth_max = CTD.depth_max(depth, np.isfinite(t))
 
-# Ozmidov scale
-Lo = np.sqrt(eps / N2_ref ** (3 / 2))
-
-# Turbulent diffusivity using the Osborne relation
-Kv = gam * eps / N2_ref
+Lo, Kv = VMP.common_turbulence(eps, N2_ref, gam)
 
 vmp_datavars = {
     "C": (["depth", "profile"], C, {"Variable": "Conductivity"}),

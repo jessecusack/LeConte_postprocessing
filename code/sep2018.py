@@ -12,6 +12,7 @@ import ADCP
 import clargs
 import CTD
 import utils
+import VMP
 
 ############### PRELIMINARIES ################
 # Parse command line arguments
@@ -64,13 +65,9 @@ for i in tqdm(range(vmp.time.size)):
 # Max valid depth
 depth_max = CTD.depth_max(depth, np.isfinite(t))
 
-# Ozmidov scale
-Lo1 = np.sqrt(eps1 / N2_ref ** (3 / 2))
-Lo2 = np.sqrt(eps1 / N2_ref ** (3 / 2))
-
-# Turbulent diffusivity using the Osborne relation
-Kv1 = gam * eps1 / N2_ref
-Kv2 = gam * eps2 / N2_ref
+# Ozmidov scale and diffusivity
+Lo1, Kv1 = VMP.common_turbulence(eps1, N2_ref, gam)
+Lo2, Kv2 = VMP.common_turbulence(eps2, N2_ref, gam)
 
 insection = np.full((len(secs), vmp.time.size), False)
 section = np.arange(len(secs)) + 1
