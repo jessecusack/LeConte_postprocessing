@@ -36,38 +36,21 @@ gps = munchify(ds["gps"])
 print("Loading SADCP.")
 sadcp = munchify(mat73.loadmat(files.sadcp)["adcp"])
 
-############### VMP ################
-print("Processing VMP")
+############### CTD ################
+print("Processing CTD")
 bin_width = params.ctd.adiabatic_level_bin_width
-gam = params.vmp.mixing_efficiency
+depth_min = params.ctd.depth_min
+depth_max = params.ctd.depth_max
+depth_spacing = params.ctd.depth_spacing
 
-t = vmp.JAC_T
-C = vmp.JAC_C
-SP = vmp.salt
-depth = vmp.depth
-eps1 = vmp.eps1
-eps2 = vmp.eps2
-# Temperature variance not working?
-# chi1 = vmp.chi1
-# chi2 = vmp.chi2
-lon = vmp.lon
-lat = vmp.lat
+ctd = CTD.generate_CTD_Munch(vmp.time, vmp.depth, vmp.lon, vmp.lat, vmp.salt, vmp.JAC_T, C=vmp.JAC_C, depth_min=depth_min, depth_max=depth_max, depth_spacing=depth_spacing)
 
-p, SA, CT, sig0, p_mid, N2 = CTD.common_thermodynamics(depth, lon, lat, SP, t)
+ctd = CTD.apply_thermodynamics(ctd)
 
-N2_ref = np.full_like(t, np.nan)
-print("Adiabatic levelling of buoyancy frequency.")
-for i in tqdm(range(vmp.time.size)):
-    N2_ref[:, i] = mx.nsq.adiabatic_leveling(
-        p, SP[:, i], t[:, i], lon[i], lat[i], bin_width=bin_width
-    )
+ctd = CTD.apply_adiabatic_level(ctd, bin_width)
 
 # Max valid depth
-depth_max = CTD.depth_max(depth, np.isfinite(t))
-
-# Ozmidov scale and diffusivity
-Lo1, Kv1 = VMP.common_turbulence(eps1, N2_ref, gam)
-Lo2, Kv2 = VMP.common_turbulence(eps2, N2_ref, gam)
+ctd.depth_max = CTD.depth_max(ctd.depth, np.isfinite(ctd.t))
 
 insection = np.full((len(secs), vmp.time.size), False)
 section = np.arange(len(secs)) + 1
@@ -82,12 +65,64 @@ lat_start = np.hstack([sec.startlat for sec in secs])
 lat_end = np.hstack([sec.endlat for sec in secs])
 section_description = np.hstack([sec.description for sec in secs])
 
+ctd_datavars = {
+    "C": (["depth", "profile"], ctd.C, {"Variable": "Conductivity"}),
+    "SP": (["depth", "profile"], ctd.SP, {"Variable": "Practical salinity"}),
+    "t": (["depth", "profile"], ctd.t, {"Variable": "Temperature (in situ)"}),
+    "CT": (["depth", "profile"], ctd.CT, {"Variable": "Conservative temperature"}),
+    "SA": (["depth", "profile"], ctd.SA, {"Variable": "Absolute salinity"}),
+    "sig0": (
+        ["depth", "profile"],
+        ctd.sig0,
+        {"Variable": "Potential density referenced to 0 dbar"},
+    ),
+    "N2": (["depth_mid", "profile"], ctd.N2, {"Variable": "Buoyancy frequency"}),
+    "N2_ref": (
+        ["depth", "profile"],
+        ctd.N2_ref,
+        {
+            "Variable": "Adiabatically leveled buoyancy frequency, using {:1.0f} dbar bin".format(
+                bin_width
+            )
+        },
+    ),
+    "depth_max": (["profile"], ctd.depth_max, {"Variable": "Maximum valid data depth"}),
+}
+
+ctd_coords = {
+    "profile": (["profile"], np.arange(ctd.time.size) + 1),
+    "depth": (["depth"], ctd.depth),
+    "depth_mid": (["depth_mid"], utils.mid(ctd.depth)),
+    "time": (["profile"], utils.datenum_to_datetime(ctd.time)),
+    "lon": (["profile"], ctd.lon),
+    "lat": (["profile"], ctd.lat),
+    "cast": (["profile"], vmp.cast.astype(int)),
+    "p": (["depth"], ctd.p),
+    "p_mid": (["depth_mid"], ctd.p_mid),
+    "section": (["section"], section, {"Variable": "Section number"}),
+    "insection": (["section", "profile"], insection, {"Variable": "Section masks"}),
+    "time_start": (["section"], time_start, {"Variable": "Section start time"}),
+    "time_end": (["section"], time_end, {"Variable": "Section end time"}),
+    "lon_start": (["section"], lon_start, {"Variable": "Section start longitude"}),
+    "lon_end": (["section"], lon_end, {"Variable": "Section end longitude"}),
+    "lat_start": (["section"], lat_start, {"Variable": "Section start latitude"}),
+    "lat_end": (["section"], lat_end, {"Variable": "Section end latitude"}),
+}
+
+ctd_ds = xr.Dataset(ctd_datavars, ctd_coords)
+file = "ctd_sep_2018.nc"
+print("Saving to '{}'".format(os.path.join(sdroot, file)))
+ctd_ds.to_netcdf(os.path.join(sdroot, file))
+
+############### VMP ################
+print("Processing VMP")
+gam = params.vmp.mixing_efficiency
+
+# Ozmidov scale and diffusivity
+Lo1, Kv1 = VMP.common_turbulence(vmp.eps1, ctd.N2_ref, gam)
+Lo2, Kv2 = VMP.common_turbulence(vmp.eps2, ctd.N2_ref, gam)
+
 vmp_datavars = {
-    "C": (["depth", "profile"], vmp.JAC_C, {"Variable": "Conductivity"}),
-    "SP": (["depth", "profile"], vmp.salt, {"Variable": "Practical salinity"}),
-    "t": (["depth", "profile"], vmp.JAC_T, {"Variable": "Temperature (in situ)"}),
-    "CT": (["depth", "profile"], CT, {"Variable": "Conservative temperature"}),
-    "SA": (["depth", "profile"], SA, {"Variable": "Absolute salinity"}),
     "eps1": (
         ["depth", "profile"],
         vmp.eps1,
@@ -112,53 +147,17 @@ vmp_datavars = {
             "Variable": "Turbulent diffusivity using adiabatically levelled N and assuming mixing efficiency of 0.2"
         },
     ),
-    "sig0": (
-        ["depth", "profile"],
-        sig0,
-        {"Variable": "Potential density referenced to 0 dbar"},
-    ),
-    "N2": (["depth_mid", "profile"], N2, {"Variable": "Buoyancy frequency"}),
-    "N2_ref": (
-        ["depth", "profile"],
-        N2_ref,
-        {
-            "Variable": "Adiabatically leveled buoyancy frequency, using {:1.0f} dbar bin".format(
-                bin_width
-            )
-        },
-    ),
     "Lo1": (["depth", "profile"], Lo1, {"Variable": "Ozmidov length scale"}),
     "Lo2": (["depth", "profile"], Lo2, {"Variable": "Ozmidov length scale"}),
-    "depth_max": (["profile"], depth_max, {"Variable": "Maximum valid data depth"}),
 }
-
-vmp_coords = {
-    "profile": (["profile"], np.arange(vmp.time.size) + 1),
-    "depth": (["depth"], depth),
-    "depth_mid": (["depth_mid"], utils.mid(depth)),
-    "time": (["profile"], utils.datenum_to_datetime(vmp.time)),
-    "lon": (["profile"], vmp.lon),
-    "lat": (["profile"], vmp.lat),
-    "cast": (["profile"], vmp.cast.astype(int)),
-    "p": (["depth"], p),
-    "p_mid": (["depth_mid"], p_mid[:, 0]),
-    "section": (["section"], section, {"Variable": "Section number"}),
-    "insection": (["section", "profile"], insection, {"Variable": "Section masks"}),
-    "time_start": (["section"], time_start, {"Variable": "Section start time"}),
-    "time_end": (["section"], time_end, {"Variable": "Section end time"}),
-    "lon_start": (["section"], lon_start, {"Variable": "Section start longitude"}),
-    "lon_end": (["section"], lon_end, {"Variable": "Section end longitude"}),
-    "lat_start": (["section"], lat_start, {"Variable": "Section start latitude"}),
-    "lat_end": (["section"], lat_end, {"Variable": "Section end latitude"}),
-}
-
-vmp_ds = xr.Dataset(vmp_datavars, vmp_coords)
+    
+vmp_ds = xr.Dataset({**ctd_datavars, **vmp_datavars}, ctd_coords)
 file = "vmp_sep_2018.nc"
 print("Saving to '{}'".format(os.path.join(sdroot, file)))
 vmp_ds.to_netcdf(os.path.join(sdroot, file))
 
 ############### COMBINED ################
-print("Processing combined VMP-SADCP")
+print("Processing combined CTD-VMP-SADCP")
 time_win = params.sadcp.time_window
 rmax = params.sadcp.rmax
 vmax = params.sadcp.vmax
@@ -195,7 +194,7 @@ sadcp_coords = {
 
 
 combo_ds = xr.Dataset(
-    {**vmp_datavars, **sadcp_datavars}, {**vmp_coords, **sadcp_coords}
+    {**ctd_datavars, **vmp_datavars, **sadcp_datavars}, {**ctd_coords, **sadcp_coords}
 )
 
 file = "combo_sep_2018.nc"

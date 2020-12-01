@@ -79,12 +79,7 @@ for ic in range(time.size):
 # Sea water thermodynamics
 p, SA, CT, sig0, p_mid, N2 = CTD.common_thermodynamics(depth, lon, lat, SP, t)
 
-N2_ref = np.full_like(t, np.nan)
-print("Adiabatic levelling of buoyancy frequency.")
-for i in tqdm(range(time.size)):
-    N2_ref[:, i] = mx.nsq.adiabatic_leveling(
-        p, SP[:, i], t[:, i], lon[i], lat[i], bin_width=bin_width
-    )
+N2_ref = CTD.adiabatic_level_2D(p, SP, t, lon, lat, bin_width)
 
 # Max valid depth
 depth_max = CTD.depth_max(depth, np.isfinite(t))
