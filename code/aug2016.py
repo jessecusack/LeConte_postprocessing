@@ -86,10 +86,7 @@ for i in tqdm(range(time.size)):
     )
 
 # Max valid depth
-depth_max = np.full_like(lon, np.nan)
-for i in range(time.size):
-    valid_ctd = np.isfinite(t[:, i])
-    depth_max[i] = depth[valid_ctd].max()
+depth_max = CTD.depth_max(depth, np.isfinite(t))
 
 # Ozmidov scale
 Lo = np.sqrt(eps / N2_ref ** (3 / 2))
