@@ -179,6 +179,52 @@ def nan_interp(x, xp, fp, left=None, right=None, axis=0, squeeze_me=True):
     else:
         return y
 
+    
+def interp_fill_valid_2D(x, xp, fp):
+    """
+    Assumes input values fp is 2D with size N*M, 
+    where M denotes profiles and N depths.
+    
+    Parameters
+    ----------
+        x : numpy array
+            Locations to interpolate to, 1D.
+        xp : numpy array
+            Data locations, 1D or 2D, shape (N) or (N, M).
+        fp : numpy array
+            Data values, 2D, shape (N, M).
+    
+    """
+    nc = fp.shape[1]
+    nr = x.size
+    f = np.full((nr, nc), np.nan)
+    if np.ndim(xp) == 1:
+        for i in range(nc):
+            f[:, i] = interp_fill_valid(x, xp, fp[:, i])
+    elif np.ndim(xp) == 2:
+        for i in range(nc):
+            f[:, i] = interp_fill_valid(x, xp[:, i], fp[:, i])
+    else:
+        raise ValueError("xp dimensions are wrong.")
+    return f
+
+        
+def interp_fill_valid(x, xp, fp):
+    """Interpolate to x, and invalid regions with NaN. Region to fill is
+    that out of range of max(xp) and min(xp)."""
+    valid = np.isfinite(fp)
+    
+    if any(valid):
+        xmax = np.max(xp[valid])
+        xmin = np.min(xp[valid])
+        f = np.interp(x, xp[valid], fp[valid])
+        f[(x > xmax) | (x < xmin)] = np.nan
+    else:
+        f = fp
+
+    return f
+
+
 
 def check_files(files):
     """
@@ -243,3 +289,45 @@ def closest_index(x, a):
     a: array
     """
     return np.argmin(np.abs(x - a))
+
+
+def regrid_profiles(time, timep, fp, time_win=60.):
+    """"""
+    
+    dt = time_win/(2*86400)
+    
+    nc = time.size
+    
+    idxs = []
+    idxps = []
+
+    for i in range(nc):
+        time_diff = np.abs(timep - time[i])
+        time_min = np.min(time_diff)
+        
+        # Skip if not within time window
+        if time_min > dt:
+            continue
+            
+        idx = np.argmin(time_diff)
+        
+        # Skip if already found
+        if idx in idxs:
+            continue
+        
+        idxs.append(i)
+        idxps.append(idx)
+        
+    idxs = np.asarray(idxs)
+    idxps = np.asarray(idxps)
+        
+    ndim = np.ndim(fp)
+    if ndim == 1:
+        f = np.full_like(time, np.nan)
+        f[idxs] = fp[idxps]
+    elif ndim == 2:
+        nr = fp.shape[0]
+        f = np.full((nr, nc), np.nan)
+        f[:, idxs] = fp[:, idxps]
+        
+    return f

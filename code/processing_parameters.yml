@@ -2,10 +2,20 @@
 
 vmp:
     mixing_efficiency: 0.2 
+    # Common depth grid specs (m)
+    depth_min: 1.0
+    depth_max: 300.0
+    depth_spacing: 1.0
+    # Search time window for regridding VMP data to position of CTD profile (s)
+    time_window: 60.0
     
 ctd:
     # Bin width for the adiabatic levelling method (dbar)
-    adiabatic_level_bin_width: 20.
+    adiabatic_level_bin_width: 20.0
+    # Common depth grid specs (m)
+    depth_min: 1.0
+    depth_max: 300.0
+    depth_spacing: 1.0
     
 sadcp:
     # Search time window for interpolating ADCP data to position of CTD/VMP profile (s)

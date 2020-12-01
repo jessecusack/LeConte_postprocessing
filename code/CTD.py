@@ -4,8 +4,34 @@ import mixsea as mx
 from munch import Munch
 from tqdm import tqdm
 
+import utils
 
-def generate_CTD_Munch(time, depth, lon, lat, SP, t, C=None, depth_min=1.0, depth_max=300.0, depth_spacing=1.0):
+
+dvn = Munch({"time": "time", "C": "C", "SP": "S", "t": "T", "lon": "lon", "lat": "lat", "depth": "depth"})
+
+
+def generate_CTD_Munch_from_list(dlist, vn=dvn, depth_min=1.0, depth_max=300.0, depth_spacing=1.0):
+    """Handles the case of a list of dictionary-like objects."""
+    
+    ctdlist = []
+    
+    for d in dlist:
+        ctd_ = generate_CTD_Munch(d[vn.time], d[vn.depth], d[vn.lon], d[vn.lat], d[vn.SP], d[vn.t], depth_min, depth_max, depth_spacing)
+        ctdlist.append(ctd_)
+        
+    # Stack all the ctds together
+    ctd = Munch()
+    ctd.time = np.concatenate([ctd_.time for ctd_ in ctdlist], axis=0)
+    ctd.depth = ctdlist[0].depth
+    ctd.lon = np.concatenate([ctd_.lon for ctd_ in ctdlist], axis=0)
+    ctd.lat = np.concatenate([ctd_.lat for ctd_ in ctdlist], axis=0)
+    ctd.SP = np.concatenate([ctd_.SP for ctd_ in ctdlist], axis=1)
+    ctd.t = np.concatenate([ctd_.t for ctd_ in ctdlist], axis=1)
+        
+    return ctd
+
+    
+def generate_CTD_Munch(time, depth, lon, lat, SP, t, depth_min=1.0, depth_max=300.0, depth_spacing=1.0):
     """Quality control CTD quantities and place into a common Munch structure.
     
     Assumes input data is 1D with size N or M, or 2D with size N*M, 
@@ -25,8 +51,6 @@ def generate_CTD_Munch(time, depth, lon, lat, SP, t, C=None, depth_min=1.0, dept
             Practical salinity, size N*M.
         t : numpy array
             Temperature, size N*M.
-        C : numpy array
-            Conductivity, size N*M.
         depth_min : float, optional
             Minimum depth (m).
         depth_max : float, optional
@@ -44,23 +68,23 @@ def generate_CTD_Munch(time, depth, lon, lat, SP, t, C=None, depth_min=1.0, dept
     t = t[:, use]
     lon = lon[use]
     lat = lat[use]
-    if C is not None:
-        C = C[:, use]
     
     # Interpolate to a common depth grid if necessary.
     depth_ = np.arange(depth_min, depth_max + depth_spacing, depth_spacing)
     
     size_equal = depth_.size == depth.size
-    all_close = np.allclose(depth, depth_)
+    
+    if size_equal:
+        all_close = np.allclose(depth, depth_)
+    else:
+        all_close = False
     
     if size_equal and all_close:
         pass
-    else:
-        SP = utils.nan_interp(depth_, depth, SP, axis=0)
-        t = utils.nan_interp(depth_, depth, t, axis=0)
+    else:        
+        SP = utils.interp_fill_valid_2D(depth_, depth, SP)
+        t = utils.interp_fill_valid_2D(depth_, depth, t)
         depth = depth_
-        if C is not None:
-            C = utils.nan_interp(depth_, depth, C, axis=0)
         
     ctd = Munch()
     
@@ -70,8 +94,6 @@ def generate_CTD_Munch(time, depth, lon, lat, SP, t, C=None, depth_min=1.0, dept
     ctd.lat = lat
     ctd.SP = SP
     ctd.t = t
-    if C is not None:
-        ctd.C = C
         
     return ctd
 
@@ -132,7 +154,7 @@ def depth_max(depth, mask):
     
     dmax = np.full((mask.shape[1]), np.nan)
     for i in range(mask.shape[1]):
-        dmax[i] = depth[mask[:, i]].max()
+        dmax[i] = np.max(depth[mask[:, i]])
         
     return dmax
 
@@ -159,6 +181,7 @@ def adiabatic_level_2D(p, SP, t, lon, lat, bin_width=20.0):
             Bin width (dbar). 
     
     """
+    print("Adiabatically levelling profiles")
     N2_ref = np.full_like(t, np.nan)
     for i in tqdm(range(t.shape[1])):
         N2_ref[:, i] = mx.nsq.adiabatic_leveling(
@@ -166,3 +189,20 @@ def adiabatic_level_2D(p, SP, t, lon, lat, bin_width=20.0):
         )
         
     return N2_ref
+
+
+def regrid_vmp_to_ctd(vmp, ctd, time_win=60.):
+    """Add some CTD variabiles to the VMP Munch."""
+    
+    ctd.eps1 = utils.regrid_profiles(ctd.time, vmp.time, vmp.eps1)
+    ctd.Lo1 = utils.regrid_profiles(ctd.time, vmp.time, vmp.Lo1)
+    ctd.Kv1 = utils.regrid_profiles(ctd.time, vmp.time, vmp.Kv1)
+
+    try:
+        ctd.eps2 = utils.regrid_profiles(ctd.time, vmp.time, vmp.eps2)
+        ctd.Lo2 = utils.regrid_profiles(ctd.time, vmp.time, vmp.Lo2)
+        ctd.Kv2 = utils.regrid_profiles(ctd.time, vmp.time, vmp.Kv2)
+    except AttributeError:
+        pass
+
+    return ctd

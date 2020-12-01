@@ -24,8 +24,9 @@ files = utils.find_files(args, "sep2018")
 
 params = utils.load_parameters()
 
+print("Loading data may trigger Dropbox download!")
+
 ############### LOAD DATA ################
-print("Loading data. (---> This may trigger Dropbox download <---)")
 print("Loading sections.")
 secs = utils.loadmat(files.vmp_sections, check_arrays=True, mat_dtype=True)["vmp"]
 secs = np.array([munchify(ds) for ds in secs])
@@ -43,7 +44,7 @@ depth_min = params.ctd.depth_min
 depth_max = params.ctd.depth_max
 depth_spacing = params.ctd.depth_spacing
 
-ctd = CTD.generate_CTD_Munch(vmp.time, vmp.depth, vmp.lon, vmp.lat, vmp.salt, vmp.JAC_T, C=vmp.JAC_C, depth_min=depth_min, depth_max=depth_max, depth_spacing=depth_spacing)
+ctd = CTD.generate_CTD_Munch(vmp.time, vmp.depth, vmp.lon, vmp.lat, vmp.salt, vmp.JAC_T, depth_min=depth_min, depth_max=depth_max, depth_spacing=depth_spacing)
 
 ctd = CTD.apply_thermodynamics(ctd)
 
@@ -66,7 +67,6 @@ lat_end = np.hstack([sec.endlat for sec in secs])
 section_description = np.hstack([sec.description for sec in secs])
 
 ctd_datavars = {
-    "C": (["depth", "profile"], ctd.C, {"Variable": "Conductivity"}),
     "SP": (["depth", "profile"], ctd.SP, {"Variable": "Practical salinity"}),
     "t": (["depth", "profile"], ctd.t, {"Variable": "Temperature (in situ)"}),
     "CT": (["depth", "profile"], ctd.CT, {"Variable": "Conservative temperature"}),
@@ -117,10 +117,18 @@ ctd_ds.to_netcdf(os.path.join(sdroot, file))
 ############### VMP ################
 print("Processing VMP")
 gam = params.vmp.mixing_efficiency
+depth_min = params.vmp.depth_min
+depth_max = params.vmp.depth_max
+depth_spacing = params.vmp.depth_spacing
+time_win = params.vmp.time_window
+
+vmp = VMP.generate_VMP_Munch(vmp.time, vmp.depth, vmp.lon, vmp.lat, vmp.eps1, eps2=vmp.eps2, depth_min=depth_min, depth_max=depth_max, depth_spacing=depth_spacing)
+
+vmp = VMP.regrid_ctd_to_vmp(ctd, vmp, time_win)
 
 # Ozmidov scale and diffusivity
-Lo1, Kv1 = VMP.common_turbulence(vmp.eps1, ctd.N2_ref, gam)
-Lo2, Kv2 = VMP.common_turbulence(vmp.eps2, ctd.N2_ref, gam)
+Lo1, Kv1 = VMP.common_turbulence(vmp.eps1, vmp.N2_ref, gam)
+Lo2, Kv2 = VMP.common_turbulence(vmp.eps2, vmp.N2_ref, gam)
 
 vmp_datavars = {
     "eps1": (
@@ -150,53 +158,64 @@ vmp_datavars = {
     "Lo1": (["depth", "profile"], Lo1, {"Variable": "Ozmidov length scale"}),
     "Lo2": (["depth", "profile"], Lo2, {"Variable": "Ozmidov length scale"}),
 }
+
+vmp_coords = {
+    "profile": (["profile"], np.arange(vmp.time.size) + 1),
+    "depth": (["depth"], vmp.depth),
+    "depth_mid": (["depth_mid"], utils.mid(vmp.depth)),
+    "time": (["profile"], utils.datenum_to_datetime(vmp.time)),
+    "lon": (["profile"], vmp.lon),
+    "lat": (["profile"], vmp.lat),
+    "p": (["depth"], vmp.p),
+    "p_mid": (["depth_mid"], vmp.p_mid),
+}
     
-vmp_ds = xr.Dataset({**ctd_datavars, **vmp_datavars}, ctd_coords)
+vmp_ds = xr.Dataset(vmp_datavars, vmp_coords)
 file = "vmp_sep_2018.nc"
 print("Saving to '{}'".format(os.path.join(sdroot, file)))
 vmp_ds.to_netcdf(os.path.join(sdroot, file))
 
 ############### COMBINED ################
-print("Processing combined CTD-VMP-SADCP")
-time_win = params.sadcp.time_window
-rmax = params.sadcp.rmax
-vmax = params.sadcp.vmax
-range_min = params.sadcp.range_min
+# print("Processing combined CTD-VMP-SADCP")
+# time_win = params.sadcp.time_window
+# rmax = params.sadcp.rmax
+# vmax = params.sadcp.vmax
+# range_min = params.sadcp.range_min
 
-print("Interpolating velocity to VMP stations.")
-mask = np.isfinite(vmp.JAC_T)
-u, v, w, lon, lat, range_bottom, nav = ADCP.interp_ADCP_2D(
-    sadcp,
-    mask,
-    vmp.depth,
-    vmp.lon,
-    vmp.lat,
-    vmp.time,
-    time_win=time_win,
-    rmax=rmax,
-    vmax=vmax,
-    range_min=range_min,
-)
-
-
-sadcp_datavars = {
-    "u": (["depth", "profile"], u, {"Variable": "Northward velocity"}),
-    "v": (["depth", "profile"], v, {"Variable": "Eastward velocity"}),
-    "w": (["depth", "profile"], u, {"Variable": "Vertical velocity"}),
-    "range_bottom": (["profile"], range_bottom, {"Variable": "Range to bottom"}),
-    "nav": (["profile"], nav, {"Variable": "Number of ADCP profiles in average."}),
-}
-
-sadcp_coords = {
-    "lon_sadcp": (["profile"], lon, {"Variable": "Mean longitude of SADCP data"}),
-    "lat_sadcp": (["profile"], lat, {"Variable": "Mean latitude of SADCP data"}),
-}
+# print("Interpolating velocity to VMP stations.")
+# mask = np.isfinite(vmp.JAC_T)
+# u, v, w, lon, lat, range_bottom, nav = ADCP.interp_ADCP_2D(
+#     sadcp,
+#     mask,
+#     vmp.depth,
+#     vmp.lon,
+#     vmp.lat,
+#     vmp.time,
+#     time_win=time_win,
+#     rmax=rmax,
+#     vmax=vmax,
+#     range_min=range_min,
+# )
 
 
-combo_ds = xr.Dataset(
-    {**ctd_datavars, **vmp_datavars, **sadcp_datavars}, {**ctd_coords, **sadcp_coords}
-)
+# sadcp_datavars = {
+#     "u": (["depth", "profile"], u, {"Variable": "Northward velocity"}),
+#     "v": (["depth", "profile"], v, {"Variable": "Eastward velocity"}),
+#     "w": (["depth", "profile"], u, {"Variable": "Vertical velocity"}),
+#     "range_bottom": (["profile"], range_bottom, {"Variable": "Range to bottom"}),
+#     "nav": (["profile"], nav, {"Variable": "Number of ADCP profiles in average."}),
+# }
 
-file = "combo_sep_2018.nc"
-print("Saving to '{}'".format(os.path.join(sdroot, file)))
-combo_ds.to_netcdf(os.path.join(sdroot, file))
+# sadcp_coords = {
+#     "lon_sadcp": (["profile"], lon, {"Variable": "Mean longitude of SADCP data"}),
+#     "lat_sadcp": (["profile"], lat, {"Variable": "Mean latitude of SADCP data"}),
+# }
+
+
+# combo_ds = xr.Dataset(
+#     {**ctd_datavars, **vmp_datavars, **sadcp_datavars}, {**ctd_coords, **sadcp_coords}
+# )
+
+# file = "combo_sep_2018.nc"
+# print("Saving to '{}'".format(os.path.join(sdroot, file)))
+# combo_ds.to_netcdf(os.path.join(sdroot, file))
