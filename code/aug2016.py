@@ -36,7 +36,9 @@ depth_min = params.ctd.depth_min
 depth_max = params.ctd.depth_max
 depth_spacing = params.ctd.depth_spacing
 
-ctd = CTD.generate_CTD_Munch_from_list(ctds, depth_min=depth_min, depth_max=depth_max, depth_spacing=depth_spacing)
+ctd = CTD.generate_CTD_Munch_from_list(
+    ctds, depth_min=depth_min, depth_max=depth_max, depth_spacing=depth_spacing
+)
 
 ctd = CTD.apply_thermodynamics(ctd)
 
@@ -94,7 +96,17 @@ depth_spacing = params.vmp.depth_spacing
 time_win = params.vmp.time_window
 
 depth = -gsw.z_from_p(vmp.Pm, vmp.lat[np.newaxis, :])
-vmp = VMP.generate_VMP_Munch(vmp.Tm, depth, vmp.lon, vmp.lat, vmp.Em, eps2=None, depth_min=depth_min, depth_max=depth_max, depth_spacing=depth_spacing)
+vmp = VMP.generate_VMP_Munch(
+    vmp.Tm,
+    depth,
+    vmp.lon,
+    vmp.lat,
+    vmp.Em,
+    eps2=None,
+    depth_min=depth_min,
+    depth_max=depth_max,
+    depth_spacing=depth_spacing,
+)
 
 vmp = VMP.regrid_ctd_to_vmp(ctd, vmp, time_win)
 
@@ -102,7 +114,7 @@ vmp.Lo1, vmp.Kv1 = VMP.common_turbulence(vmp.eps1, vmp.N2_ref, gam)
 
 vmp_datavars = {
     "eps1": (
-        ["depth", "profile"], 
+        ["depth", "profile"],
         vmp.eps1,
         {"Variable": "Turbulent dissipation rate of kinetic energy"},
     ),
@@ -179,7 +191,7 @@ ctd = CTD.regrid_vmp_to_ctd(vmp, ctd, time_win=params.vmp.time_window)
 
 combo_datavars = {
     "eps1": (
-        ["depth", "profile"], 
+        ["depth", "profile"],
         ctd.eps1,
         {"Variable": "Turbulent dissipation rate of kinetic energy"},
     ),

@@ -44,7 +44,17 @@ depth_min = params.ctd.depth_min
 depth_max = params.ctd.depth_max
 depth_spacing = params.ctd.depth_spacing
 
-ctd = CTD.generate_CTD_Munch(vmp.time, vmp.depth, vmp.lon, vmp.lat, vmp.salt, vmp.JAC_T, depth_min=depth_min, depth_max=depth_max, depth_spacing=depth_spacing)
+ctd = CTD.generate_CTD_Munch(
+    vmp.time,
+    vmp.depth,
+    vmp.lon,
+    vmp.lat,
+    vmp.salt,
+    vmp.JAC_T,
+    depth_min=depth_min,
+    depth_max=depth_max,
+    depth_spacing=depth_spacing,
+)
 
 ctd = CTD.apply_thermodynamics(ctd)
 
@@ -122,7 +132,17 @@ depth_max = params.vmp.depth_max
 depth_spacing = params.vmp.depth_spacing
 time_win = params.vmp.time_window
 
-vmp = VMP.generate_VMP_Munch(vmp.time, vmp.depth, vmp.lon, vmp.lat, vmp.eps1, eps2=vmp.eps2, depth_min=depth_min, depth_max=depth_max, depth_spacing=depth_spacing)
+vmp = VMP.generate_VMP_Munch(
+    vmp.time,
+    vmp.depth,
+    vmp.lon,
+    vmp.lat,
+    vmp.eps1,
+    eps2=vmp.eps2,
+    depth_min=depth_min,
+    depth_max=depth_max,
+    depth_spacing=depth_spacing,
+)
 
 vmp = VMP.regrid_ctd_to_vmp(ctd, vmp, time_win)
 
@@ -169,7 +189,7 @@ vmp_coords = {
     "p": (["depth"], vmp.p),
     "p_mid": (["depth_mid"], vmp.p_mid),
 }
-    
+
 vmp_ds = xr.Dataset(vmp_datavars, vmp_coords)
 file = "vmp_sep_2018.nc"
 print("Saving to '{}'".format(os.path.join(sdroot, file)))
