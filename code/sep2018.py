@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 import ADCP
 import clargs
+import CTD
 import utils
 
 ############### PRELIMINARIES ################
@@ -51,11 +52,7 @@ eps2 = vmp.eps2
 lon = vmp.lon
 lat = vmp.lat
 
-p = gsw.p_from_z(-depth, np.mean(lat))
-SA = gsw.SA_from_SP(SP, p[:, np.newaxis], lon[np.newaxis, :], lat[np.newaxis, :])
-CT = gsw.CT_from_t(SA, t, p[:, np.newaxis])
-sig0 = gsw.pot_rho_t_exact(SA, t, p[:, np.newaxis], 0)
-N2, p_mid = gsw.Nsquared(SA, CT, p[:, np.newaxis], lat[np.newaxis, :])
+p, SA, CT, sig0, p_mid, N2 = CTD.common_thermodynamics(depth, lon, lat, SP, t)
 
 N2_ref = np.full_like(t, np.nan)
 print("Adiabatic levelling of buoyancy frequency.")

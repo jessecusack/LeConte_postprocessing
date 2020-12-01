@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 import ADCP
 import clargs
+import CTD
 import utils
 
 ############### PRELIMINARIES ################
@@ -75,11 +76,7 @@ for ic in range(time.size):
 
 
 # Sea water thermodynamics
-p = gsw.p_from_z(-depth, np.mean(lat))
-SA = gsw.SA_from_SP(SP, p[:, np.newaxis], lon[np.newaxis, :], lat[np.newaxis, :])
-CT = gsw.CT_from_t(SA, t, p[:, np.newaxis])
-sig0 = gsw.pot_rho_t_exact(SA, t, p[:, np.newaxis], 0)
-N2, p_mid = gsw.Nsquared(SA, CT, p[:, np.newaxis], lat[np.newaxis, :])
+p, SA, CT, sig0, p_mid, N2 = CTD.common_thermodynamics(depth, lon, lat, SP, t)
 
 N2_ref = np.full_like(t, np.nan)
 print("Adiabatic levelling of buoyancy frequency.")
@@ -99,19 +96,6 @@ Lo = np.sqrt(eps / N2_ref ** (3 / 2))
 
 # Turbulent diffusivity using the Osborne relation
 Kv = gam * eps / N2_ref
-
-# insection = np.full((len(secs), time.size), False)
-# section = np.arange(len(secs)) + 1
-# for i, sec in enumerate(secs):
-#     insection[i, sec.profiles.index.astype(int) - 1] = True
-
-# time_start = np.hstack([utils.datenum_to_datetime(sec.starttime) for sec in secs])
-# time_end = np.hstack([utils.datenum_to_datetime(sec.endtime) for sec in secs])
-# lon_start = np.hstack([sec.startlon for sec in secs])
-# lon_end = np.hstack([sec.endlon for sec in secs])
-# lat_start = np.hstack([sec.startlat for sec in secs])
-# lat_end = np.hstack([sec.endlat for sec in secs])
-# section_description = np.hstack([sec.description for sec in secs])
 
 vmp_datavars = {
     "C": (["depth", "profile"], C, {"Variable": "Conductivity"}),
@@ -155,17 +139,8 @@ vmp_coords = {
     "time": (["profile"], utils.datenum_to_datetime(time)),
     "lon": (["profile"], lon),
     "lat": (["profile"], lat),
-    #     "cast": (["profile"], cast.astype(int)),
     "p": (["depth"], p),
     "p_mid": (["depth_mid"], p_mid[:, 0]),
-    #     "section": (["section"], section, {"Variable": "Section number"}),
-    #     "insection": (["section", "profile"], insection, {"Variable": "Section masks"}),
-    #     "time_start": (["section"], time_start, {"Variable": "Section start time"}),
-    #     "time_end": (["section"], time_end, {"Variable": "Section end time"}),
-    #     "lon_start": (["section"], lon_start, {"Variable": "Section start longitude"}),
-    #     "lon_end": (["section"], lon_end, {"Variable": "Section end longitude"}),
-    #     "lat_start": (["section"], lat_start, {"Variable": "Section start latitude"}),
-    #     "lat_end": (["section"], lat_end, {"Variable": "Section end latitude"}),
 }
 
 vmp_ds = xr.Dataset(vmp_datavars, vmp_coords)
