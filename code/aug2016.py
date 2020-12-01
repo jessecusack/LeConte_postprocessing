@@ -151,48 +151,86 @@ print("Saving to '{}'".format(os.path.join(sdroot, file)))
 vmp_ds.to_netcdf(os.path.join(sdroot, file))
 
 ############### COMBINED ################
-# print("Loading SADCP. (Warning: large file ~ 1 GB.)")
-# sadcp = munchify(mat73.loadmat(files.sadcp)["adcp"])
-# print("Processing combined VMP-SADCP")
-# time_win = params.sadcp.time_window
-# rmax = params.sadcp.rmax
-# vmax = params.sadcp.vmax
-# range_min = params.sadcp.range_min
+print("Loading SADCP. (Warning: large file ~ 1 GB.)")
+sadcp = munchify(mat73.loadmat(files.sadcp)["adcp"])
+print("Processing combined VMP-SADCP")
+time_win = params.sadcp.time_window
+rmax = params.sadcp.rmax
+vmax = params.sadcp.vmax
+range_min = params.sadcp.range_min
 
-# print("Interpolating velocity to VMP stations.")
-# mask = np.isfinite(t)
-# u, v, w, lon, lat, range_bottom, nav = ADCP.interp_ADCP_2D(
-#     sadcp,
-#     mask,
-#     depth,
-#     lon,
-#     lat,
-#     time,
-#     time_win=time_win,
-#     rmax=rmax,
-#     vmax=vmax,
-#     range_min=range_min,
-# )
+print("Interpolating velocity to VMP stations.")
+mask = np.isfinite(ctd.t)
+u, v, w, lon, lat, range_bottom, nav = ADCP.interp_ADCP_2D(
+    sadcp,
+    mask,
+    ctd.depth,
+    ctd.lon,
+    ctd.lat,
+    ctd.time,
+    time_win=time_win,
+    rmax=rmax,
+    vmax=vmax,
+    range_min=range_min,
+)
 
-
-# sadcp_datavars = {
-#     "u": (["depth", "profile"], u, {"Variable": "Northward velocity"}),
-#     "v": (["depth", "profile"], v, {"Variable": "Eastward velocity"}),
-#     "w": (["depth", "profile"], u, {"Variable": "Vertical velocity"}),
-#     "range_bottom": (["profile"], range_bottom, {"Variable": "Range to bottom"}),
-#     "nav": (["profile"], nav, {"Variable": "Number of ADCP profiles in average."}),
-# }
-
-# sadcp_coords = {
-#     "lon_sadcp": (["profile"], lon, {"Variable": "Mean longitude of SADCP data"}),
-#     "lat_sadcp": (["profile"], lat, {"Variable": "Mean latitude of SADCP data"}),
-# }
+ctd = CTD.regrid_vmp_to_ctd(vmp, ctd, time_win=params.vmp.time_window)
 
 
-# combo_ds = xr.Dataset(
-#     {**vmp_datavars, **sadcp_datavars}, {**vmp_coords, **sadcp_coords}
-# )
+combo_datavars = {
+    "eps1": (
+        ["depth", "profile"], 
+        ctd.eps1,
+        {"Variable": "Turbulent dissipation rate of kinetic energy"},
+    ),
+    "Kv1": (
+        ["depth", "profile"],
+        ctd.Kv1,
+        {"Variable": "Turbulent diffusivity"},
+    ),
+    "Lo1": (["depth", "profile"], ctd.Lo1, {"Variable": "Ozmidov length scale"}),
+    "SP": (["depth", "profile"], ctd.SP, {"Variable": "Practical salinity"}),
+    "t": (["depth", "profile"], ctd.t, {"Variable": "Temperature (in situ)"}),
+    "CT": (["depth", "profile"], ctd.CT, {"Variable": "Conservative temperature"}),
+    "SA": (["depth", "profile"], ctd.SA, {"Variable": "Absolute salinity"}),
+    "sig0": (
+        ["depth", "profile"],
+        ctd.sig0,
+        {"Variable": "Potential density referenced to 0 dbar"},
+    ),
+    "N2": (["depth_mid", "profile"], ctd.N2, {"Variable": "Buoyancy frequency"}),
+    "N2_ref": (
+        ["depth", "profile"],
+        ctd.N2_ref,
+        {
+            "Variable": "Adiabatically leveled buoyancy frequency, using {:1.0f} dbar bin".format(
+                bin_width
+            )
+        },
+    ),
+    "depth_max": (["profile"], ctd.depth_max, {"Variable": "Maximum valid data depth"}),
+    "u": (["depth", "profile"], u, {"Variable": "Northward velocity"}),
+    "v": (["depth", "profile"], v, {"Variable": "Eastward velocity"}),
+    "w": (["depth", "profile"], u, {"Variable": "Vertical velocity"}),
+    "range_bottom": (["profile"], range_bottom, {"Variable": "Range to bottom"}),
+    "nav": (["profile"], nav, {"Variable": "Number of ADCP profiles in average."}),
+}
 
-# file = "combo_aug_2016.nc"
-# print("Saving to '{}'".format(os.path.join(sdroot, file)))
-# combo_ds.to_netcdf(os.path.join(sdroot, file))
+combo_coords = {
+    "profile": (["profile"], np.arange(ctd.time.size) + 1),
+    "depth": (["depth"], ctd.depth),
+    "depth_mid": (["depth_mid"], utils.mid(ctd.depth)),
+    "time": (["profile"], utils.datenum_to_datetime(ctd.time)),
+    "lon": (["profile"], ctd.lon),
+    "lat": (["profile"], ctd.lat),
+    "p": (["depth"], ctd.p),
+    "p_mid": (["depth_mid"], ctd.p_mid),
+    "lon_sadcp": (["profile"], lon, {"Variable": "Mean longitude of SADCP data"}),
+    "lat_sadcp": (["profile"], lat, {"Variable": "Mean latitude of SADCP data"}),
+}
+
+combo_ds = xr.Dataset(combo_datavars, combo_coords)
+
+file = "combo_aug_2016.nc"
+print("Saving to '{}'".format(os.path.join(sdroot, file)))
+combo_ds.to_netcdf(os.path.join(sdroot, file))

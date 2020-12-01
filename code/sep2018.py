@@ -127,8 +127,8 @@ vmp = VMP.generate_VMP_Munch(vmp.time, vmp.depth, vmp.lon, vmp.lat, vmp.eps1, ep
 vmp = VMP.regrid_ctd_to_vmp(ctd, vmp, time_win)
 
 # Ozmidov scale and diffusivity
-Lo1, Kv1 = VMP.common_turbulence(vmp.eps1, vmp.N2_ref, gam)
-Lo2, Kv2 = VMP.common_turbulence(vmp.eps2, vmp.N2_ref, gam)
+vmp.Lo1, vmp.Kv1 = VMP.common_turbulence(vmp.eps1, vmp.N2_ref, gam)
+vmp.Lo2, vmp.Kv2 = VMP.common_turbulence(vmp.eps2, vmp.N2_ref, gam)
 
 vmp_datavars = {
     "eps1": (
@@ -143,20 +143,20 @@ vmp_datavars = {
     ),
     "Kv1": (
         ["depth", "profile"],
-        Kv1,
+        vmp.Kv1,
         {
             "Variable": "Turbulent diffusivity using adiabatically levelled N and assuming mixing efficiency of 0.2"
         },
     ),
     "Kv2": (
         ["depth", "profile"],
-        Kv2,
+        vmp.Kv2,
         {
             "Variable": "Turbulent diffusivity using adiabatically levelled N and assuming mixing efficiency of 0.2"
         },
     ),
-    "Lo1": (["depth", "profile"], Lo1, {"Variable": "Ozmidov length scale"}),
-    "Lo2": (["depth", "profile"], Lo2, {"Variable": "Ozmidov length scale"}),
+    "Lo1": (["depth", "profile"], vmp.Lo1, {"Variable": "Ozmidov length scale"}),
+    "Lo2": (["depth", "profile"], vmp.Lo2, {"Variable": "Ozmidov length scale"}),
 }
 
 vmp_coords = {
@@ -176,46 +176,107 @@ print("Saving to '{}'".format(os.path.join(sdroot, file)))
 vmp_ds.to_netcdf(os.path.join(sdroot, file))
 
 ############### COMBINED ################
-# print("Processing combined CTD-VMP-SADCP")
-# time_win = params.sadcp.time_window
-# rmax = params.sadcp.rmax
-# vmax = params.sadcp.vmax
-# range_min = params.sadcp.range_min
+print("Processing combined CTD-VMP-SADCP")
+time_win = params.sadcp.time_window
+rmax = params.sadcp.rmax
+vmax = params.sadcp.vmax
+range_min = params.sadcp.range_min
 
-# print("Interpolating velocity to VMP stations.")
-# mask = np.isfinite(vmp.JAC_T)
-# u, v, w, lon, lat, range_bottom, nav = ADCP.interp_ADCP_2D(
-#     sadcp,
-#     mask,
-#     vmp.depth,
-#     vmp.lon,
-#     vmp.lat,
-#     vmp.time,
-#     time_win=time_win,
-#     rmax=rmax,
-#     vmax=vmax,
-#     range_min=range_min,
-# )
+print("Interpolating velocity to CTD stations.")
+mask = np.isfinite(ctd.t)
+u, v, w, lon, lat, range_bottom, nav = ADCP.interp_ADCP_2D(
+    sadcp,
+    mask,
+    ctd.depth,
+    ctd.lon,
+    ctd.lat,
+    ctd.time,
+    time_win=time_win,
+    rmax=rmax,
+    vmax=vmax,
+    range_min=range_min,
+)
+
+ctd = CTD.regrid_vmp_to_ctd(vmp, ctd, time_win=params.vmp.time_window)
+
+combo_datavars = {
+    "eps1": (
+        ["depth", "profile"],
+        ctd.eps1,
+        {"Variable": "Turbulent dissipation rate of kinetic energy"},
+    ),
+    "eps2": (
+        ["depth", "profile"],
+        ctd.eps2,
+        {"Variable": "Turbulent dissipation rate of kinetic energy"},
+    ),
+    "Kv1": (
+        ["depth", "profile"],
+        ctd.Kv1,
+        {
+            "Variable": "Turbulent diffusivity using adiabatically levelled N and assuming mixing efficiency of 0.2"
+        },
+    ),
+    "Kv2": (
+        ["depth", "profile"],
+        ctd.Kv2,
+        {
+            "Variable": "Turbulent diffusivity using adiabatically levelled N and assuming mixing efficiency of 0.2"
+        },
+    ),
+    "Lo1": (["depth", "profile"], ctd.Lo1, {"Variable": "Ozmidov length scale"}),
+    "Lo2": (["depth", "profile"], ctd.Lo2, {"Variable": "Ozmidov length scale"}),
+    "SP": (["depth", "profile"], ctd.SP, {"Variable": "Practical salinity"}),
+    "t": (["depth", "profile"], ctd.t, {"Variable": "Temperature (in situ)"}),
+    "CT": (["depth", "profile"], ctd.CT, {"Variable": "Conservative temperature"}),
+    "SA": (["depth", "profile"], ctd.SA, {"Variable": "Absolute salinity"}),
+    "sig0": (
+        ["depth", "profile"],
+        ctd.sig0,
+        {"Variable": "Potential density referenced to 0 dbar"},
+    ),
+    "N2": (["depth_mid", "profile"], ctd.N2, {"Variable": "Buoyancy frequency"}),
+    "N2_ref": (
+        ["depth", "profile"],
+        ctd.N2_ref,
+        {
+            "Variable": "Adiabatically leveled buoyancy frequency, using {:1.0f} dbar bin".format(
+                bin_width
+            )
+        },
+    ),
+    "depth_max": (["profile"], ctd.depth_max, {"Variable": "Maximum valid data depth"}),
+    "u": (["depth", "profile"], u, {"Variable": "Northward velocity"}),
+    "v": (["depth", "profile"], v, {"Variable": "Eastward velocity"}),
+    "w": (["depth", "profile"], u, {"Variable": "Vertical velocity"}),
+    "range_bottom": (["profile"], range_bottom, {"Variable": "Range to bottom"}),
+    "nav": (["profile"], nav, {"Variable": "Number of ADCP profiles in average."}),
+}
+
+combo_coords = {
+    "profile": (["profile"], np.arange(ctd.time.size) + 1),
+    "depth": (["depth"], ctd.depth),
+    "depth_mid": (["depth_mid"], utils.mid(ctd.depth)),
+    "time": (["profile"], utils.datenum_to_datetime(ctd.time)),
+    "lon": (["profile"], ctd.lon),
+    "lat": (["profile"], ctd.lat),
+    "p": (["depth"], ctd.p),
+    "p_mid": (["depth_mid"], ctd.p_mid),
+    "lon_sadcp": (["profile"], lon, {"Variable": "Mean longitude of SADCP data"}),
+    "lat_sadcp": (["profile"], lat, {"Variable": "Mean latitude of SADCP data"}),
+    "section": (["section"], section, {"Variable": "Section number"}),
+    "insection": (["section", "profile"], insection, {"Variable": "Section masks"}),
+    "time_start": (["section"], time_start, {"Variable": "Section start time"}),
+    "time_end": (["section"], time_end, {"Variable": "Section end time"}),
+    "lon_start": (["section"], lon_start, {"Variable": "Section start longitude"}),
+    "lon_end": (["section"], lon_end, {"Variable": "Section end longitude"}),
+    "lat_start": (["section"], lat_start, {"Variable": "Section start latitude"}),
+    "lat_end": (["section"], lat_end, {"Variable": "Section end latitude"}),
+}
 
 
-# sadcp_datavars = {
-#     "u": (["depth", "profile"], u, {"Variable": "Northward velocity"}),
-#     "v": (["depth", "profile"], v, {"Variable": "Eastward velocity"}),
-#     "w": (["depth", "profile"], u, {"Variable": "Vertical velocity"}),
-#     "range_bottom": (["profile"], range_bottom, {"Variable": "Range to bottom"}),
-#     "nav": (["profile"], nav, {"Variable": "Number of ADCP profiles in average."}),
-# }
+combo_ds = xr.Dataset(combo_datavars, combo_coords)
 
-# sadcp_coords = {
-#     "lon_sadcp": (["profile"], lon, {"Variable": "Mean longitude of SADCP data"}),
-#     "lat_sadcp": (["profile"], lat, {"Variable": "Mean latitude of SADCP data"}),
-# }
-
-
-# combo_ds = xr.Dataset(
-#     {**ctd_datavars, **vmp_datavars, **sadcp_datavars}, {**ctd_coords, **sadcp_coords}
-# )
-
-# file = "combo_sep_2018.nc"
-# print("Saving to '{}'".format(os.path.join(sdroot, file)))
-# combo_ds.to_netcdf(os.path.join(sdroot, file))
+file = "combo_sep_2018.nc"
+print("Saving to '{}'".format(os.path.join(sdroot, file)))
+combo_ds.to_netcdf(os.path.join(sdroot, file))
