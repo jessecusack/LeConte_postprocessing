@@ -21,6 +21,7 @@ dependencies:
 - munch
 - h5py
 - pylint
+- utm
 - pip:
     - mixsea
     - mat73==0.41
