@@ -36,10 +36,18 @@ coords = munchify(
 ctd.p = ctd.pop("P")
 ctd.lon = coords.moorD[1]
 ctd.lat = coords.moorD[0]
-ctd.depth = -gsw.z_from_p(ctd.p, ctd.lat)
 ctd.depth_nominal = ctd.z  # Note sure about this.
 ctd.SP = ctd.pop("S")
 ctd.t = ctd.pop("T")
+
+# Interpolate salinity and pressure to level of thermistors
+for i in range(ctd.time.size):
+    nans = np.isnan(ctd.p[:, i])
+    ctd.p[nans, i] = np.interp(ctd.depth_nominal[nans], ctd.depth_nominal[~nans], ctd.p[~nans, i])
+    ctd.SP[nans, i] = np.interp(ctd.p[nans, i], ctd.p[~nans, i], ctd.p[~nans, i])
+
+# Thermodynamics
+ctd.depth = -gsw.z_from_p(ctd.p, ctd.lat)
 ctd.SA = gsw.SA_from_SP(ctd.SP, ctd.p, ctd.lon, ctd.lat)
 ctd.CT = gsw.CT_from_t(ctd.SA, ctd.t, ctd.p)
 ctd.sig0 = gsw.pot_rho_t_exact(ctd.SA, ctd.t, ctd.p, 0)
