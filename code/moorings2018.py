@@ -47,7 +47,7 @@ ctd.N2, ctd.p_mid = gsw.Nsquared(ctd.SA, ctd.CT, ctd.p, ctd.lat)
 
 ctd = utils.apply_utm(ctd)
 
-bad_velocty = (adcp.u > 1.0) | (adcp.v > 1.0) | (adcp.w > 1.0)
+bad_velocty = (np.abs(adcp.u) > 1.0) | (np.abs(adcp.v) > 1.0) | (np.abs(adcp.w) > 1.0)
 adcp.u[bad_velocty] = np.nan
 adcp.v[bad_velocty] = np.nan
 adcp.w[bad_velocty] = np.nan
@@ -81,6 +81,7 @@ coords = {
     "time": (["time"], utils.datenum_to_datetime(ctd.time)),
     "depth": (["i", "time"], ctd.depth),
     "depth_adcp": (["depth_adcp"], adcp.z),
+    "depth_nominal": (["i"], ctd.depth_nominal),
     "lon": ([], ctd.lon),
     "lat": ([], ctd.lat),
     "x": ([], ctd.x),
