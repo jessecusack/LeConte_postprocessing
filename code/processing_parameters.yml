@@ -7,7 +7,7 @@ vmp:
     depth_max: 300.0
     depth_spacing: 1.0
     # Search time window for regridding VMP data to position of CTD profile (s)
-    time_window: 60.0
+    time_window: 120.0
     
 ctd:
     # Bin width for the adiabatic levelling method (dbar)

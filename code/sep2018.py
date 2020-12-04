@@ -60,8 +60,9 @@ ctd = CTD.apply_thermodynamics(ctd)
 
 ctd = CTD.apply_adiabatic_level(ctd, bin_width)
 
-# Max valid depth
 ctd.depth_max = CTD.depth_max(ctd.depth, np.isfinite(ctd.t))
+
+ctd = utils.apply_utm(ctd)
 
 insection = np.full((len(secs), vmp.time.size), False)
 section = np.arange(len(secs)) + 1
@@ -106,6 +107,10 @@ ctd_coords = {
     "time": (["profile"], utils.datenum_to_datetime(ctd.time)),
     "lon": (["profile"], ctd.lon),
     "lat": (["profile"], ctd.lat),
+    "x": (["profile"], ctd.x),
+    "y": (["profile"], ctd.y),
+    "zone_letter": ([], ctd.zone_letter),
+    "zone_number": ([], ctd.zone_number),
     "cast": (["profile"], vmp.cast.astype(int)),
     "p": (["depth"], ctd.p),
     "p_mid": (["depth_mid"], ctd.p_mid),
@@ -145,6 +150,8 @@ vmp = VMP.generate_VMP_Munch(
 )
 
 vmp = VMP.regrid_ctd_to_vmp(ctd, vmp, time_win)
+
+vmp = utils.apply_utm(vmp)
 
 # Ozmidov scale and diffusivity
 vmp.Lo1, vmp.Kv1 = VMP.common_turbulence(vmp.eps1, vmp.N2_ref, gam)
@@ -186,6 +193,10 @@ vmp_coords = {
     "time": (["profile"], utils.datenum_to_datetime(vmp.time)),
     "lon": (["profile"], vmp.lon),
     "lat": (["profile"], vmp.lat),
+    "x": (["profile"], vmp.x),
+    "y": (["profile"], vmp.y),
+    "zone_letter": ([], vmp.zone_letter),
+    "zone_number": ([], vmp.zone_number),
     "p": (["depth"], vmp.p),
     "p_mid": (["depth_mid"], vmp.p_mid),
 }
@@ -280,6 +291,10 @@ combo_coords = {
     "time": (["profile"], utils.datenum_to_datetime(ctd.time)),
     "lon": (["profile"], ctd.lon),
     "lat": (["profile"], ctd.lat),
+    "x": (["profile"], ctd.x),
+    "y": (["profile"], ctd.y),
+    "zone_letter": ([], ctd.zone_letter),
+    "zone_number": ([], ctd.zone_number),
     "p": (["depth"], ctd.p),
     "p_mid": (["depth_mid"], ctd.p_mid),
     "lon_sadcp": (["profile"], lon, {"Variable": "Mean longitude of SADCP data"}),

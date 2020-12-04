@@ -5,6 +5,7 @@ import numpy as np
 import scipy.io as io
 import yaml
 from munch import Munch, munchify
+import utm
 
 
 def loadmat(filename, check_arrays=False, **kwargs):
@@ -330,3 +331,9 @@ def regrid_profiles(time, timep, fp, time_win=60.0):
         f[:, idxs] = fp[:, idxps]
 
     return f
+
+
+def apply_utm(m):
+    """m is a Munch object"""
+    m.x, m.y, m.zone_number, m.zone_letter = utm.from_latlon(m.lat, m.lon)
+    return m
