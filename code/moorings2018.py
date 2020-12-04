@@ -4,6 +4,7 @@ import gsw
 import numpy as np
 import xarray as xr
 from munch import munchify
+from tqdm import tqdm
 
 import clargs
 import utils
@@ -33,18 +34,21 @@ coords = munchify(
     utils.loadmat(files.coords, check_arrays=True, mat_dtype=True)["mooringCoord"]
 )
 
-ctd.p = ctd.pop("P")
+ctd.p = np.flipud(ctd.pop("P"))
 ctd.lon = coords.moorD[1]
 ctd.lat = coords.moorD[0]
-ctd.depth_nominal = ctd.z  # Note sure about this.
-ctd.SP = ctd.pop("S")
-ctd.t = ctd.pop("T")
+ctd.depth_nominal = np.flipud(ctd.z)  # Note sure about this.
+ctd.SP = np.flipud(ctd.pop("S"))
+ctd.t = np.flipud(ctd.pop("T"))
 
 # Interpolate salinity and pressure to level of thermistors
-for i in range(ctd.time.size):
+print("Interpolating CTD")
+for i in tqdm(range(ctd.time.size)):
     nans = np.isnan(ctd.p[:, i])
-    ctd.p[nans, i] = np.interp(ctd.depth_nominal[nans], ctd.depth_nominal[~nans], ctd.p[~nans, i])
-    ctd.SP[nans, i] = np.interp(ctd.p[nans, i], ctd.p[~nans, i], ctd.p[~nans, i])
+    ctd.p[nans, i] = np.interp(
+        ctd.depth_nominal[nans], ctd.depth_nominal[~nans], ctd.p[~nans, i]
+    )
+    ctd.SP[nans, i] = np.interp(ctd.p[nans, i], ctd.p[~nans, i], ctd.SP[~nans, i])
 
 # Thermodynamics
 ctd.depth = -gsw.z_from_p(ctd.p, ctd.lat)
@@ -55,10 +59,25 @@ ctd.N2, ctd.p_mid = gsw.Nsquared(ctd.SA, ctd.CT, ctd.p, ctd.lat)
 
 ctd = utils.apply_utm(ctd)
 
-bad_velocty = (np.abs(adcp.u) > 1.0) | (np.abs(adcp.v) > 1.0) | (np.abs(adcp.w) > 1.0)
-adcp.u[bad_velocty] = np.nan
-adcp.v[bad_velocty] = np.nan
-adcp.w[bad_velocty] = np.nan
+# ADCP
+# print("Despiking ADCP")
+adcp.depth = adcp.pop("z")
+n1 = 2
+n2 = 5
+size = 201
+xmin = -1.0
+xmax = 1.0
+fill = True
+for i in tqdm(range(adcp.depth.size)):
+    adcp.u[i, :] = utils.despike(
+        adcp.u[i, :], n1=n1, n2=n2, size=size, xmin=xmin, xmax=xmax, fill=fill
+    )
+    adcp.v[i, :] = utils.despike(
+        adcp.v[i, :], n1=n1, n2=n2, size=size, xmin=xmin, xmax=xmax, fill=fill
+    )
+    adcp.w[i, :] = utils.despike(
+        adcp.w[i, :], n1=n1, n2=n2, size=size, xmin=xmin, xmax=xmax, fill=fill
+    )
 
 datavars = {
     "SP": (["i", "time"], ctd.SP, {"Variable": "Practical salinity"}),
@@ -74,21 +93,12 @@ datavars = {
     "u": (["depth_adcp", "time"], adcp.u, {"Variable": "Eastward velocity"}),
     "v": (["depth_adcp", "time"], adcp.v, {"Variable": "Northward velocity"}),
     "w": (["depth_adcp", "time"], adcp.w, {"Variable": "Vertical velocity"}),
-    #     "N2_ref": (
-    #         ["i", "time"],
-    #         ctd.N2_ref,
-    #         {
-    #             "Variable": "Adiabatically leveled buoyancy frequency, using {:1.0f} dbar bin".format(
-    #                 bin_width
-    #             )
-    #         },
-    #     ),
 }
 
 coords = {
     "time": (["time"], utils.datenum_to_datetime(ctd.time)),
     "depth": (["i", "time"], ctd.depth),
-    "depth_adcp": (["depth_adcp"], adcp.z),
+    "depth_adcp": (["depth_adcp"], adcp.depth),
     "depth_nominal": (["i"], ctd.depth_nominal),
     "lon": ([], ctd.lon),
     "lat": ([], ctd.lat),

@@ -6,6 +6,7 @@ import scipy.io as io
 import utm
 import yaml
 from munch import Munch, munchify
+from scipy.ndimage import median_filter
 
 
 def loadmat(filename, check_arrays=False, **kwargs):
@@ -337,3 +338,73 @@ def apply_utm(m):
     """m is a Munch object"""
     m.x, m.y, m.zone_number, m.zone_letter = utm.from_latlon(m.lat, m.lon)
     return m
+
+
+def rolling_window(a, size):
+    pad = np.ones(len(a.shape), dtype=np.int32)
+    pad[-1] = size - 1
+    pad = list(zip(pad, np.zeros(len(a.shape), dtype=np.int32)))
+    a = np.pad(a, pad, mode="reflect")
+    shape = a.shape[:-1] + (a.shape[-1] - size + 1, size)
+    strides = a.strides + (a.strides[-1],)
+    return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+
+
+def despike(x, n1=3, n2=6, size=101, xmin=-1.0, xmax=1.0, fill=True):
+    """
+    Despike data using a median filter and 2 pass standard deviation threshold.
+
+    Parameters
+    ----------
+        x : numpy array
+            Data, evenly spaced.
+        n1 : float
+            Pass 1 significance threshold, n standard deviations from reference data.
+        n2 : float
+            Pass 2 significance threshold, n standard deviations from reference data.
+        size : float, optional
+            Number of data points in the filter window.
+        xmin : float, optional
+            Minimum value of x, data below this value will be removed.
+        xmax : float, optional
+            Maximum value of x, data above this value will be removed.
+        fill : boolean, optional
+            Fill spikes using linear interpolation.
+
+    """
+
+    # First get rid of gaps using linear interpolation
+    nans = np.isnan(x)
+    if any(nans):
+        t_ = np.arange(x.size)
+        x[nans] = np.interp(t_[nans], t[~nans], x[~nans])
+
+    # Moving median and std pass 1
+    roll = rolling_window(x, size)
+    x1med = np.median(roll, axis=-1)
+    x1std = np.std(roll, axis=-1)
+    # Spikes using first threshold
+    dx1 = x - x1med
+    spikes1 = np.abs(dx1) > n1 * x1std
+
+    # Mask out spikes from first pass
+    xm = np.ma.masked_where(spikes1, x)
+
+    # Moving median and std pass 2
+    roll = rolling_window(xm, size)
+    x2med = np.ma.median(roll, axis=-1)
+    x2std = np.ma.std(roll, axis=-1)
+    dx2 = x - x2med
+    spikes = np.abs(dx2) > n2 * x2std
+
+    # Trim min and max
+    trim = (x > xmax) | (x < xmin)
+    spikes[trim] = True
+
+    if fill:
+        t_ = np.arange(x.size)
+        x[spikes] = np.interp(t_[spikes], t_[~spikes], x[~spikes])
+    else:
+        x[spikes] = np.nan
+
+    return x
