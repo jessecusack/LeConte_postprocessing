@@ -8,7 +8,6 @@ from munch import munchify
 import clargs
 import utils
 
-
 ############### PRELIMINARIES ################
 # Parse command line arguments
 args = clargs.parse_check_args()
@@ -26,9 +25,13 @@ print("Combining ADCP and CTD datasets")
 print("Loading ADCP data")
 adcp = munchify(utils.loadmat(files.deep_adcp, check_arrays=True, mat_dtype=True)["V"])
 print("Loading CTD data")
-ctd = munchify(utils.loadmat(files.deep_ctd, check_arrays=True, mat_dtype=True)["mooring"])
+ctd = munchify(
+    utils.loadmat(files.deep_ctd, check_arrays=True, mat_dtype=True)["mooring"]
+)
 print("Loading coordinates")
-coords = munchify(utils.loadmat(files.coords, check_arrays=True, mat_dtype=True)["mooringCoord"])
+coords = munchify(
+    utils.loadmat(files.coords, check_arrays=True, mat_dtype=True)["mooringCoord"]
+)
 
 ctd.p = ctd.pop("P")
 ctd.lon = coords.moorD[1]
@@ -44,7 +47,7 @@ ctd.N2, ctd.p_mid = gsw.Nsquared(ctd.SA, ctd.CT, ctd.p, ctd.lat)
 
 ctd = utils.apply_utm(ctd)
 
-bad_velocty = (adcp.u > 1.) | (adcp.v > 1.) | (adcp.w > 1.)
+bad_velocty = (adcp.u > 1.0) | (adcp.v > 1.0) | (adcp.w > 1.0)
 adcp.u[bad_velocty] = np.nan
 adcp.v[bad_velocty] = np.nan
 adcp.w[bad_velocty] = np.nan
@@ -63,16 +66,15 @@ datavars = {
     "u": (["depth_adcp", "time"], adcp.u, {"Variable": "Eastward velocity"}),
     "v": (["depth_adcp", "time"], adcp.v, {"Variable": "Northward velocity"}),
     "w": (["depth_adcp", "time"], adcp.w, {"Variable": "Vertical velocity"}),
-    
-#     "N2_ref": (
-#         ["i", "time"],
-#         ctd.N2_ref,
-#         {
-#             "Variable": "Adiabatically leveled buoyancy frequency, using {:1.0f} dbar bin".format(
-#                 bin_width
-#             )
-#         },
-#     ),
+    #     "N2_ref": (
+    #         ["i", "time"],
+    #         ctd.N2_ref,
+    #         {
+    #             "Variable": "Adiabatically leveled buoyancy frequency, using {:1.0f} dbar bin".format(
+    #                 bin_width
+    #             )
+    #         },
+    #     ),
 }
 
 coords = {

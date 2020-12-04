@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import scipy.io as io
+import utm
 import yaml
 from munch import Munch, munchify
-import utm
 
 
 def loadmat(filename, check_arrays=False, **kwargs):
