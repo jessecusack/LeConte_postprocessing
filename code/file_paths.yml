@@ -27,6 +27,12 @@ sep2018moorings:
         root: "leconte"
 
 
+sep2018kayak:
+    kayak:
+        path: "Data/ocean/september2018/processed/ROSE_kayaks/summary/ROSS_Sept2018_CTD_ADCP_combo.mat"
+        root: "leconte"
+
+
 aug2016:
     vmp:
         path: "Data/ocean/august2016/VMP/combined_VMP.mat"

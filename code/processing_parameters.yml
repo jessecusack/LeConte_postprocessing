@@ -26,3 +26,13 @@ sadcp:
     vmax: 2.0
     # Minimum allowed range (m)
     range_min: 4.0
+    
+    
+kayak:
+    # Common depth grid specs (m)
+    adcp_depth_min: 1.0
+    adcp_depth_max: 165.0
+    adcp_depth_spacing: 1.0
+    ctd_depth_min: 1.0
+    ctd_depth_max: 300.0
+    ctd_depth_spacing: 1.0

@@ -44,10 +44,10 @@ def check_args(args):
     else:
         print("LeConte data path '{}' exists.".format(args.leconte))
 
-    if not os.path.exists(args.adcp):
-        raise ValueError("ADCP directory does not exist: '{}'".format(args.adcp))
-    else:
-        print("ADCP path '{}' exists.".format(args.adcp))
+#     if not os.path.exists(args.adcp):
+#         raise ValueError("ADCP directory does not exist: '{}'".format(args.adcp))
+#     else:
+#         print("ADCP path '{}' exists.".format(args.adcp))
 
     if not os.path.exists(args.save):
         raise ValueError("Save directory does not exist: '{}'".format(args.save))
