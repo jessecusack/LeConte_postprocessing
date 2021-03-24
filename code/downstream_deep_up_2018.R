@@ -8,7 +8,7 @@ lat <- 56.83596667
 lon <- -132.3616833
 dec <- 19.32  # magnetic declination
 n <- 8  # ensemble averaging
-ori <- "up"  # orientation
+ori <- "upward"  # orientation
 
 
 # Load data and remove times where the instrument was not in the water
