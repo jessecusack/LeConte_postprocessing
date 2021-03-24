@@ -63,3 +63,34 @@ This might be useful if the defaults fail on your computer.
 <!-- ## How to develop the code
 
 Install the development environment `conda env create -f environment_dev.yml` and look in the `tests` folder. -->
+
+## How to install the development environment
+
+```
+conda activate lcpp-dev
+python -m ipykernel install --user --name lcpp-dev --display-name lcpp-dev
+conda deactivate
+```
+
+## ADCP processing with R and oce
+
+The [oce](https://dankelley.github.io/oce/) package in R has a lot of tools for processing oceanographic data. To make use of it we have to first install R e.g.
+
+```
+brew install r
+```
+
+Optionally install the GIO 'Rstudio', which is a bit like matlab or spyder e.g. `brew install rstudio`. Run R and install the required packages:
+
+```
+R
+install.packages("oce")
+install.packages("ncdf4")
+q()
+```
+
+Then the processing scripts can be run from the terminal, e.g.:
+
+```
+Rscript ABLE_deep_2018.R
+```
