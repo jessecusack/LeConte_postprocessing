@@ -94,6 +94,42 @@ def datenum_to_datetime(datenum):
     return dt
 
 
+def POSIX_to_datetime(POSIX):
+    """
+    Convert POSIX timestamps into python datetimes.
+
+    Parameters
+    ----------
+    POSIX : array_like
+        A POSIX timestamp or array of timestamps.
+
+    Returns
+    -------
+    dt : ndarray
+        Python datetime. See datetime module.
+
+    """
+
+    def convert(POSIX):
+        try:
+            return (
+                datetime.fromtimestamp(POSIX)
+            )
+        except ValueError:
+            return np.nan
+
+    if np.iterable(POSIX):
+        par = np.asarray(POSIX)
+        shape = par.shape
+        dt = np.array([convert(el) for el in par.flat])
+        dt = dt.reshape(shape)
+    else:
+        dt = convert(POSIX)
+
+    return dt
+
+
+
 def mid(x, axis=0):
     """Returns mid point values along given axis."""
     ndim = np.ndim(x)
