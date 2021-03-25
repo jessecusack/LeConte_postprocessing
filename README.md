@@ -4,6 +4,8 @@ The code in this repository pulls in various data sources from the LeConte
 dropbox folder and performs some postprocessing before compiling it into 
 netcdf files. 
 
+The instructions below are for macOS, but should mostly work for other unix systems. 
+
 ## How to run the code
 
 Install the python package manager [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
@@ -66,6 +68,8 @@ Install the development environment `conda env create -f environment_dev.yml` an
 
 ## How to install the development environment
 
+The development environment contains more modules for testing. 
+
 ```
 conda activate lcpp-dev
 python -m ipykernel install --user --name lcpp-dev --display-name lcpp-dev
@@ -80,12 +84,13 @@ The [oce](https://dankelley.github.io/oce/) package in R has a lot of tools for 
 brew install r
 ```
 
-Optionally install the GIO 'Rstudio', which is a bit like matlab or spyder e.g. `brew install rstudio`. Run R and install the required packages:
+Optionally install the GUI editor 'Rstudio', which is a bit like matlab or spyder (`brew install rstudio`). Run R and install the required packages:
 
 ```
 R
 install.packages("oce")
 install.packages("ncdf4")
+install.packages("RSQLite")  # For loading rsk files.
 q()
 ```
 
