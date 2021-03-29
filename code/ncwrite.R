@@ -200,13 +200,13 @@ adp_write <- function(adp, name){
   # Input physical variables, if they exist
   # Physical variables, if they exist
   if (is_temperature) {
-    ncvar_put(ncout, pitch_def, adp[['temperature']])
+    ncvar_put(ncout, t_def, adp[['temperature']])
   }
   if (is_salinity) {
-    ncvar_put(ncout, pitch_def, adp[['salinity']])
+    ncvar_put(ncout, SP_def, adp[['salinity']])
   }
   if (is_pressure) {
-    ncvar_put(ncout, pitch_def, adp[['pressure']])
+    ncvar_put(ncout, p_def, adp[['pressure']])
   }
   
   # Copy metadata
