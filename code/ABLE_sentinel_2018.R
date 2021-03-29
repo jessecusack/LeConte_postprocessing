@@ -1,6 +1,6 @@
 library(oce)
 library(ncdf4)
-source("create_nc_from_adp_sentinel.R")
+source("ncwrite.R")
 
 # Parameters
 file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/ABLE_Sentinel/ADCP/LeConte S-ABLE Sept2018 20180901T233454.pd0"
@@ -8,7 +8,7 @@ file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/ABLE_Sentinel/A
 lat <- 56.8370392
 lon <- -132.3574123
 dec <- 19.32  # magnetic declination
-n <- 6  # ensemble averaging
+# n <- 6  # ensemble averaging
 ori <- "upward"  # orientation
 
 
@@ -19,7 +19,7 @@ adp <- oceSetMetadata(adp, 'orientation', ori)
 # adp <- subset(adp, pressure > pmin)
 
 # Ensemble average the data, 
-adp <- adpEnsembleAverage(adp, n = n)
+# adp <- adpEnsembleAverage(adp, n = n)
 # Convert to xyz coordinates
 xyz <- beamToXyz(adp)
 
@@ -29,4 +29,4 @@ xyz <- beamToXyz(adp)
 # gives a value of 19.3 depending on which standard you choose...
 enu <- xyzToEnu(xyz, declination = dec)
 
-create_nc_from_adp_sentinel(enu, "../proc/ABLE_sentinel_2018_enu")
+adp_write(enu, "../proc/ABLE_sentinel_2018_enu.nc")
