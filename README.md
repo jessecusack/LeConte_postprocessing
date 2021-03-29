@@ -99,3 +99,11 @@ Then the processing scripts can be run from the terminal, e.g.:
 ```
 Rscript ABLE_deep_2018.R
 ```
+
+## ADCP processing with MATLAB
+
+Dylan Winters at OSU has written some great code for parsing ADCP data. This requires matlab with the navigation and robotics toolboxes installed (and perhaps others, I'm not sure)
+
+RBR [provides a MATLAB toolbox](https://rbr-global.com/support/matlab-tools) for working with their instruments (such as the soloT).
+
+[Rich Pawlowicz provides](https://www.eoas.ubc.ca/~rich/) several MATLAB toolboxes for reading ADCP data from teledyne RDI, as well as CTD data from Seabird among others. 
