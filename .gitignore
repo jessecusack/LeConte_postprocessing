@@ -5,6 +5,9 @@
 # R stuff
 .Rhistory
 
+# MATLAB stuff
+*.m~
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
