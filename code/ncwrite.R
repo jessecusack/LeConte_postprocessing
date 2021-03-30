@@ -1,4 +1,11 @@
-adp_write <- function(adp, name){
+adp_write <- function(adp, filePath){
+  # Writes data from an oce ADP object to a netcdf file.
+  #
+  # Parameters
+  # ----------
+  #    adp : An adp object.
+  #    filePath : The file path, which should include the .nc suffix.
+  #    
   if (!inherits(adp, "adp")){
     stop("Must be an object of class adp")
   }
@@ -145,7 +152,7 @@ adp_write <- function(adp, name){
   }
   
   # Create file
-  ncout <- nc_create(name, vars, force_v4 = TRUE)
+  ncout <- nc_create(filePath, vars, force_v4 = TRUE)
   
   # Input latitude and longitude
   ncvar_put(ncout, lon_def, adp[['longitude']])
@@ -198,7 +205,6 @@ adp_write <- function(adp, name){
   ncvar_put(ncout, heading_def, adp[['heading']])
   
   # Input physical variables, if they exist
-  # Physical variables, if they exist
   if (is_temperature) {
     ncvar_put(ncout, t_def, adp[['temperature']])
   }
@@ -212,12 +218,127 @@ adp_write <- function(adp, name){
   # Copy metadata
   copy_metadata(adp@metadata, ncout)
   
+  print(paste("Saving:", filePath))
   nc_close(ncout)
-  print("Saving")
+  
 }
 
-copy_metadata <- function(meta, ncout, namePrefix=""){
+
+write_moored_ctd <- function(ctd, filePath) {
+  # Writes data from an oce CTD object obtained from a moored sensor to a 
+  # netcdf file.
+  #
+  # Parameters
+  # ----------
+  #    ctd : An ctd object.
+  #    filePath : The file path, which should include the .nc suffix.
+  #
+  if (!inherits(ctd, "ctd") & !inherits(ctd, "rsk")){
+    stop("Must be an object of class ctd")
+  }
   
+  # Parameters
+  FillValue <- NaN
+  t_units <- "deg C"  # Temperature units
+  SP_units <- "PSU"  # Salinity units
+  turb_units <- "NTU"  # Turbidity units
+  p_units <- "dbar"  # Pressure units
+  C_units <- "mS/cm"  # Conductivity units
+  
+  # Logical checks
+  is_salinity <- !is.null(ctd[['salinity']])
+  is_pressure <- !is.null(ctd[['pressure']])
+  is_temperature <- !is.null(ctd[['temperature']])
+  is_conductivity <- !is.null(ctd[['conductivity']])
+  is_turbidity <- !is.null(ctd[['turbidity']])
+  
+  # Sometimes the time is a timestep rather than a POSIX time
+  is_timestep <- is.null(ctd[['time']])
+  if (is_timestep) {
+    ctd[['time']] <- ctd[['timeS']] + ctd[['startTime']]
+  }
+  
+  # Create dimensions
+  time <- ctd[['time']]
+  timedim <- ncdim_def("time", "POSIXct", as.double(time))    #time formatting FIX
+  
+  # Define latitude and longitude
+  lon_def <- ncvar_def("lon", "degrees", list(), FillValue, "longitude_degrees_east", prec="float")
+  lat_def <- ncvar_def("lat", "degrees", list(), FillValue, "latitude_degrees_north", prec="float")
+  
+  vars <- list(lon_def, lat_def)
+  
+  # Physical variables, if they exist
+  if (is_temperature) {
+    dlname <- "temperature"
+    t_def <- ncvar_def("t", t_units, list(timedim), FillValue, dlname, prec="float")
+    vars <- append(vars, list(t_def))
+  }
+  if (is_salinity) {
+    dlname <- "salinity"
+    SP_def <- ncvar_def("SP", SP_units, list(timedim), FillValue, dlname, prec="float")
+    vars <- append(vars, list(SP_def))
+  }
+  if (is_pressure) {
+    dlname <- "pressure"
+    p_def <- ncvar_def("p", p_units, list(timedim), FillValue, dlname, prec="float")
+    vars <- append(vars, list(p_def))
+  }
+  if (is_conductivity) {
+    dlname <- "conductivity"
+    C_def <- ncvar_def("Cp", C_units, list(timedim), FillValue, dlname, prec="float")
+    vars <- append(vars, list(C_def))
+  }
+  if (is_turbidity) {
+    dlname <- "turbidity"
+    turb_def <- ncvar_def("turb", turb_units, list(timedim), FillValue, dlname, prec="float")
+    vars <- append(vars, list(turb_def))
+  }
+  
+  # Create file
+  print(vars)
+  ncout <- nc_create(filePath, vars, force_v4 = TRUE)
+  
+  # Input latitude and longitude
+  ncvar_put(ncout, lon_def, ctd[['longitude']])
+  ncvar_put(ncout, lat_def, ctd[['latitude']])
+  
+  # Input physical variables, if they exist
+  if (is_temperature) {
+    ncvar_put(ncout, t_def, ctd[['temperature']])
+  }
+  if (is_salinity) {
+    ncvar_put(ncout, SP_def, ctd[['salinity']])
+  }
+  if (is_pressure) {
+    ncvar_put(ncout, p_def, ctd[['pressure']])
+  }
+  if (is_conductivity) {
+    ncvar_put(ncout, C_def, ctd[['conductivity']])
+  }
+  if (is_turbidity) {
+    ncvar_put(ncout, turb_def, ctd[['turbidity']])
+  }
+  
+  # Copy metadata
+  copy_metadata(ctd@metadata, ncout)
+  
+  print(paste("Saving:", filePath))
+  nc_close(ncout)
+  
+}
+
+
+copy_metadata <- function(meta, ncout, namePrefix=""){
+  # Recursively copies oce object metadata to a netcdf file.
+  #
+  # Parameters
+  # ----------
+  #    meta : A named list of metadata.
+  #    ncout : The netcdf file handle.
+  #    namePrefix : When metadata object is a list of lists, a prefix is 
+  #                 appended the attribute name.
+  # 
   for (name in names(meta)) {
     
     dat <- meta[[name]]
@@ -248,7 +369,5 @@ copy_metadata <- function(meta, ncout, namePrefix=""){
     finalName <- paste(namePrefix, name, sep="")
     print(paste("Inputting:", name, "as", finalName))
     ncatt_put(ncout, 0, finalName, dat)
-    
   }
-  
 }
