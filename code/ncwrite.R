@@ -286,7 +286,7 @@ write_moored_ctd <- function(ctd, filePath) {
   }
   if (is_conductivity) {
     dlname <- "conductivity"
-    C_def <- ncvar_def("Cp", C_units, list(timedim), FillValue, dlname, prec="float")
+    C_def <- ncvar_def("C", C_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(C_def))
   }
   if (is_turbidity) {
@@ -296,7 +296,6 @@ write_moored_ctd <- function(ctd, filePath) {
   }
   
   # Create file
-  print(vars)
   ncout <- nc_create(filePath, vars, force_v4 = TRUE)
   
   # Input latitude and longitude
