@@ -18,6 +18,8 @@ adp <- read.adp(file, latitude = lat, longitude = lon)
 adp <- oceSetMetadata(adp, 'orientation', ori)
 # adp <- subset(adp, pressure > pmin)
 
+adp_write(adp, "../proc/ABLE_sentinel_2018.nc")
+
 # Ensemble average the data, 
 # adp <- adpEnsembleAverage(adp, n = n)
 # Convert to xyz coordinates
@@ -29,4 +31,4 @@ xyz <- beamToXyz(adp)
 # gives a value of 19.3 depending on which standard you choose...
 enu <- xyzToEnu(xyz, declination = dec)
 
-adp_write(enu, "../proc/ABLE_sentinel_2018_enu.nc")
+enu_write(enu, "../proc/ABLE_sentinel_2018_enu.nc")
