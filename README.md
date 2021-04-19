@@ -4,7 +4,9 @@ The code in this repository pulls in various data sources from the LeConte
 dropbox folder and performs some postprocessing before compiling it into 
 netcdf files. 
 
-The instructions below are for macOS, but should mostly work for other unix systems. 
+**This code will not work without access to the LeConte dropbox!**
+
+The instructions below are for _macOS_, but should mostly work for other unix systems. 
 
 ## How to run the code
 
@@ -84,7 +86,9 @@ The [oce](https://dankelley.github.io/oce/) package in R has a lot of tools for 
 brew install r
 ```
 
-Optionally install the GUI editor 'Rstudio', which is a bit like matlab or spyder (`brew install rstudio`). Run R and install the required packages:
+Optionally install the GUI editor 'Rstudio', which is a bit like matlab or spyder (`brew install rstudio`). 
+
+Run R and install the required packages:
 
 ```
 R
@@ -98,6 +102,17 @@ Then the processing scripts can be run from the terminal, e.g.:
 
 ```
 Rscript ABLE_deep_2018.R
+```
+
+### Installing the jupyter R kernel
+
+This is a convenient way to run R from within jupyter lab. I followed the installation instructions [here](https://github.com/IRkernel/IRkernel).
+
+```
+R
+install.packages('IRkernel')
+IRkernel::installspec()
+q()
 ```
 
 ## ADCP processing with MATLAB
