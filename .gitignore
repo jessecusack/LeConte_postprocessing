@@ -2,6 +2,9 @@
 *.nc
 *.mat
 
+# macOS
+.DS_Store
+
 # R stuff
 .Rhistory
 
@@ -86,6 +89,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
 
 # IPython
 profile_default/
