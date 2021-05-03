@@ -290,20 +290,20 @@ sbe53a = sbe53a.rename({"time_bins": "time"})
 # Estimate thermodynamic quantities.
 
 # %%
-sbe51a["SA"] = (sbe51a.p.dims, gsw.SA_from_SP(sbe51a.SP, sbe51a.p, sbe51a.lon, sbe51a.lat), {"units": "g/kg", "long_name": "Absolute_salinity"})
-sbe51a["CT"] = (sbe51a.p.dims, gsw.CT_from_t(sbe51a.SA, sbe51a.t, sbe51a.p), {"units": "deg C", "long_name": "Conservative_temperature"})
-sbe51a["z"] = (sbe51a.p.dims, gsw.z_from_p(sbe51a.p, sbe51a.lat), {"units": "m", "long_name": "height"})
-sbe51a["depth"] = (sbe51a.p.dims, -sbe51a.z, {"units": "m", "long_name": "depth"})
+# sbe51a["SA"] = (sbe51a.p.dims, gsw.SA_from_SP(sbe51a.SP, sbe51a.p, sbe51a.lon, sbe51a.lat), {"units": "g/kg", "long_name": "Absolute_salinity"})
+# sbe51a["CT"] = (sbe51a.p.dims, gsw.CT_from_t(sbe51a.SA, sbe51a.t, sbe51a.p), {"units": "deg C", "long_name": "Conservative_temperature"})
+# sbe51a["z"] = (sbe51a.p.dims, gsw.z_from_p(sbe51a.p, sbe51a.lat), {"units": "m", "long_name": "height"})
+# sbe51a["depth"] = (sbe51a.p.dims, -sbe51a.z, {"units": "m", "long_name": "depth"})
 
-sbe52a["SA"] = (sbe52a.p.dims, gsw.SA_from_SP(sbe52a.SP, sbe52a.p, sbe52a.lon, sbe52a.lat), {"units": "g/kg", "long_name": "Absolute_salinity"})
-sbe52a["CT"] = (sbe52a.p.dims, gsw.CT_from_t(sbe52a.SA, sbe52a.t, sbe52a.p), {"units": "deg C", "long_name": "Conservative_temperature"})
-sbe52a["z"] = (sbe52a.p.dims, gsw.z_from_p(sbe52a.p, sbe52a.lat), {"units": "m", "long_name": "height"})
-sbe52a["depth"] = (sbe52a.p.dims, -sbe52a.z, {"units": "m", "long_name": "depth"})
+# sbe52a["SA"] = (sbe52a.p.dims, gsw.SA_from_SP(sbe52a.SP, sbe52a.p, sbe52a.lon, sbe52a.lat), {"units": "g/kg", "long_name": "Absolute_salinity"})
+# sbe52a["CT"] = (sbe52a.p.dims, gsw.CT_from_t(sbe52a.SA, sbe52a.t, sbe52a.p), {"units": "deg C", "long_name": "Conservative_temperature"})
+# sbe52a["z"] = (sbe52a.p.dims, gsw.z_from_p(sbe52a.p, sbe52a.lat), {"units": "m", "long_name": "height"})
+# sbe52a["depth"] = (sbe52a.p.dims, -sbe52a.z, {"units": "m", "long_name": "depth"})
 
-sbe53a["SA"] = (sbe53a.p.dims, gsw.SA_from_SP(sbe53a.SP, sbe53a.p, sbe53a.lon, sbe53a.lat), {"units": "g/kg", "long_name": "Absolute_salinity"})
-sbe53a["CT"] = (sbe53a.p.dims, gsw.CT_from_t(sbe53a.SA, sbe53a.t, sbe53a.p), {"units": "deg C", "long_name": "Conservative_temperature"})
-sbe53a["z"] = (sbe53a.p.dims, gsw.z_from_p(sbe53a.p, sbe53a.lat), {"units": "m", "long_name": "height"})
-sbe53a["depth"] = (sbe53a.p.dims, -sbe53a.z, {"units": "m", "long_name": "depth"})
+# sbe53a["SA"] = (sbe53a.p.dims, gsw.SA_from_SP(sbe53a.SP, sbe53a.p, sbe53a.lon, sbe53a.lat), {"units": "g/kg", "long_name": "Absolute_salinity"})
+# sbe53a["CT"] = (sbe53a.p.dims, gsw.CT_from_t(sbe53a.SA, sbe53a.t, sbe53a.p), {"units": "deg C", "long_name": "Conservative_temperature"})
+# sbe53a["z"] = (sbe53a.p.dims, gsw.z_from_p(sbe53a.p, sbe53a.lat), {"units": "m", "long_name": "height"})
+# sbe53a["depth"] = (sbe53a.p.dims, -sbe53a.z, {"units": "m", "long_name": "depth"})
 
 # %% [markdown]
 # Look at a couple of plots.
@@ -313,9 +313,9 @@ fig, axs = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
 sbe51a.p.plot(ax=axs[0], label="SBE37")
 dom.p.plot(ax=axs[0], label="ADCP")
 sbe51a.t.plot(ax=axs[1])
-sbe51a.CT.plot(ax=axs[1])
+# sbe51a.CT.plot(ax=axs[1])
 sbe51a.SP.plot(ax=axs[2])
-sbe51a.SA.plot(ax=axs[2])
+# sbe51a.SA.plot(ax=axs[2])
 
 axs[0].legend()
 
@@ -340,61 +340,49 @@ depth_sbe_51 = float(sbe51a.depth.mean().values)
 depth_downward = float(dom.depth.mean().values)
 depth_sbe_53 = float(sbe53a.depth.mean().values)
 # deepest
-depths = [depth_sbe_52, depth_upward, depth_sbe_51, depth_downward, depth_sbe_53]
+depth_instrument = [depth_sbe_52, depth_upward, depth_sbe_51, depth_downward, depth_sbe_53]
 instruments = ["SBE37", "ADCP", "SBE37", "ADCP", "SBE37"]
 # Stack point data
-depth_stack = np.stack((sbe52a.depth.values, np.nan*dom.depth.values, sbe51a.depth.values, dom.depth.values, sbe53a.depth.values), axis=0)
 p_stack = np.stack((sbe52a.p.values, np.nan*dom.p.values, sbe51a.p.values, dom.p.values, sbe53a.p.values), axis=0)
 t_stack = np.stack((sbe52a.t.values, upm.t.values, sbe51a.t.values, dom.t.values, sbe53a.t.values), axis=0)
 SP_stack = np.stack((sbe52a.SP.values, np.nan*sbe52a.SP.values, sbe51a.SP.values, np.nan*sbe52a.SP.values, sbe53a.SP.values), axis=0)
+heading_stack = np.stack((np.nan*dom.heading.values, upm.heading.values, np.nan*dom.heading.values, dom.heading.values, np.nan*dom.heading.values), axis=0)
+pitch_stack = np.stack((np.nan*dom.pitch.values, upm.pitch.values, np.nan*dom.pitch.values, dom.pitch.values, np.nan*dom.pitch.values), axis=0)
+rol_stack = np.stack((np.nan*dom.rol.values, upm.rol.values, np.nan*dom.rol.values, dom.rol.values, np.nan*dom.rol.values), axis=0)
 
 # Stack ranged data
 depth_adcp = np.hstack(((depth_upward - upm.distance).values[::-1], (depth_downward + dom.distance).values))
+distance = np.hstack((upm.distance.values[::-1], -dom.distance.values))  # Negative distance means 
 u_stack = np.hstack((upm.u.values[:, ::-1], dom.u.values))
 v_stack = np.hstack((upm.v.values[:, ::-1], dom.v.values))
 w_stack = np.hstack((upm.w.values[:, ::-1], dom.w.values))
 
+x, y, zone_number, zone_letter = utm.from_latlon(dom.lat, dom.lon)
+
 coords = {
     "time": (["time"], dom.time.values),
-    "depth_adcp": (["depth_adcp"], depth_adcp),
-    "depth_nominal": (["instrument"], depths),
+    "depth_adcp": (["depth_adcp"], depth_adcp, {"Variable": "Nominal depth of ADCP measurement [m]"}),
+    "distance": (["depth_adcp"], distance, {"Variable": "ADCP bin distances from instrument [m]"}),
+    "depth_instrument": (["instrument"], depth_instrument, {"Variable": "Nominal depth of each instrument [m]"}),
     "instrument": (["instrument"], instruments),
     "lon": ([], dom.lon.values),
     "lat": ([], dom.lat.values),
-#     "x": ([], ctd.x),
-#     "y": ([], ctd.y),
-#     "zone_letter": ([], ctd.zone_letter),
-#     "zone_number": ([], ctd.zone_number),
+    "x": ([], x),
+    "y": ([], y),
+    "zone_letter": ([], zone_letter),
+    "zone_number": ([], zone_number),
 }
 
 datavars = {
-    "depth": (["instrument", "time"], depth_stack, {"Variable": "Depth [m]"}),
-    "p": (["instrument", "time"], p_stack, {"Variable": "Pressure [dbar]"}),
-    "t": (["instrument", "time"], t_stack, {"Variable": "Temperature (in situ) [deg C]"}),
-    "SP": (["instrument", "time"], SP_stack, {"Variable": "Practical salinity [PSU]"}),
-#     "t": (["i", "time"], ctd.t, {"Variable": "Temperature (in situ)"}),
-#     "CT": (["i", "time"], ctd.CT, {"Variable": "Conservative temperature"}),
-#     "SA": (["i", "time"], ctd.SA, {"Variable": "Absolute salinity"}),
-#     "b": (["i", "time"], ctd.b, {"Variable": "Buoyancy"}),
-#     "sig0": (
-#         ["i", "time"],
-#         ctd.sig0,
-#         {"Variable": "Potential density referenced to 0 dbar"},
-#     ),
-#     "N2": (["i_mid", "time"], ctd.N2, {"Variable": "Buoyancy frequency"}),
+    "p": (["time", "instrument"], p_stack.T, {"Variable": "Pressure [dbar]"}),
+    "t": (["time", "instrument"], t_stack.T, {"Variable": "Temperature (in situ) [deg C]"}),
+    "SP": (["time", "instrument"], SP_stack.T, {"Variable": "Practical salinity [PSU]"}),
     "u": (["time", "depth_adcp"], u_stack, {"Variable": "Eastward velocity [m s-1]"}),
     "v": (["time", "depth_adcp"], v_stack, {"Variable": "Northward velocity [m s-1]"}),
     "w": (["time", "depth_adcp"], w_stack, {"Variable": "Vertical velocity [m s-1]"}),
-#     "SPa": (["depth_adcp", "time"], adcp.SP, {"Variable": "Practical salinity"}),
-#     "ta": (["depth_adcp", "time"], adcp.t, {"Variable": "Temperature (in situ)"}),
-#     "CTa": (["depth_adcp", "time"], adcp.CT, {"Variable": "Conservative temperature"}),
-#     "SAa": (["depth_adcp", "time"], adcp.SA, {"Variable": "Absolute salinity"}),
-#     "ba": (["depth_adcp", "time"], adcp.b, {"Variable": "Buoyancy"}),
-#     "sig0a": (
-#         ["depth_adcp", "time"],
-#         adcp.sig0,
-#         {"Variable": "Potential density referenced to 0 dbar"},
-#     ),
+    "heading": (["time", "instrument"], heading_stack.T, {"Variable": "ADCP heading [deg]"}),
+    "pitch": (["time", "instrument"], pitch_stack.T, {"Variable": "ADCP pitch [deg]"}),
+    "rol": (["time", "instrument"], rol_stack.T, {"Variable": "ADCP roll [deg]"}),
 }
 
 ds = xr.Dataset(datavars, coords)
@@ -405,14 +393,19 @@ for i, var in enumerate(["a1", "a2", "a3", "a4", "q1", "q2", "q3", "q4", "err"])
     ds[var] = (ds.u.dims, var_stack, dom[var].attrs)
     
 
-# %%
-ds.to_netcdf("../proc/downstream_deep_mooring_2018.nc")
+# %% [markdown]
+# Extra thermodynamic stuff.
 
 # %%
-# ds["turb_RBR"] = (sVm.p.dims, virta.turb, virta.turb.attrs)
-# ds["SP_SBE37"] = (sVm.p.dims, sbea.SP, sbea.SP.attrs)
-# ds["C_SBE37"] = (sVm.p.dims, sbea.C, sbea.C.attrs)
-# ds["t_SBE37"] = (sVm.p.dims, sbea.t, sbea.t.attrs)
-# ds["p_SBE37"] = (sVm.p.dims, sbea.p, sbea.p.attrs)
+ds["SA"] = (ds.p.dims, gsw.SA_from_SP(ds.SP, ds.p, ds.lon, ds.lat), {"Variable": "Absolute_salinity [g kg-1]"})
+ds["CT"] = (ds.p.dims, gsw.CT_from_t(ds.SA, ds.t, ds.p), {"Variable": "Conservative_temperature [deg C]"})
+ds["z"] = (ds.p.dims, gsw.z_from_p(ds.p, ds.lat), {"Variable": "height [m]"})
+ds["depth"] = (ds.p.dims, -ds.z, {"Variable": "depth [m]"})
+
+# %% [markdown]
+# Save.
+
+# %%
+ds.to_netcdf("../proc/downstream_deep_mooring_2018.nc")
 
 # %%
