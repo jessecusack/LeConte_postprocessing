@@ -194,4 +194,22 @@ adm["depth"] = (adm.p.dims, -adm.z, {"units": "m", "long_name": "depth"})
 # %%
 adm.to_netcdf("../proc/ABLE_deep_mooring_2018.nc")
 
+# %% [markdown]
+# # Check some things...
+
+# %%
+adm.depth.plot()
+
+# %%
+import importlib
+importlib.reload(utils)
+
+# %%
+fig, ax = plt.subplots(figsize=(15, 5))
+ax.plot(utils.butter_filter(adm.p, 1/3600, 1/10))
+ax.plot(utils.butter_filter(adm.p, 1/(3*86400), 1/10))
+
+fig, ax = plt.subplots(figsize=(15, 5))
+ax.plot(adm.pitch, '.')
+
 # %%

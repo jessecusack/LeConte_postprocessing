@@ -7,6 +7,7 @@ import utm
 import yaml
 from munch import Munch, munchify
 from scipy.ndimage import median_filter
+import scipy.signal as sig
 
 
 def loadmat(filename, check_arrays=False, **kwargs):
@@ -444,3 +445,133 @@ def despike(x, n1=3, n2=6, size=101, xmin=-1.0, xmax=1.0, fill=True):
         x[spikes] = np.nan
 
     return x
+
+
+def butter(cutoff, fs, btype="low", order=4):
+    """Return Butterworth filter coefficients. See scipy.signal.butter for a
+    more thorough documentation.
+
+    Parameters
+    ----------
+    cutoff : array
+        Cutoff frequency, e.g. roughly speaking, the frequency at which the
+        filter acts. Units should be same as for fs paramter.
+    fs : float
+        Sampling frequency of signal. Units should be same as for cutoff
+        parameter.
+    btype : {‘lowpass’, ‘highpass’, ‘bandpass’, ‘bandstop’}, optional
+        Default is 'low'.
+    order : optional, int
+        Default is 4. The order of the Butterworth filter.
+
+    Returns
+    -------
+    b : numpy array
+        Filter b coefficients.
+    a : numpy array
+        Filter a coefficients.
+
+    """
+    cutoff = np.asarray(cutoff)
+    nyq = 0.5 * fs
+    normal_cutoff = cutoff / nyq
+    sos = sig.butter(order, normal_cutoff, btype=btype, analog=False, output="sos")
+    return sos
+
+
+def butter_filter(x, cutoff, fs, btype="low", order=4, **kwargs):
+    """Apply Butterworth filter to data using scipy.signal.filtfilt.
+
+    Parameters
+    ----------
+    x : array
+        The data to be filtered. Should be evenly sampled.
+    cutoff : array
+        Cutoff frequency, e.g. roughly speaking, the frequency at which the
+        filter acts. Units should be same as for fs paramter.
+    fs : float
+        Sampling frequency of signal. Units should be same as for cutoff
+        parameter.
+    btype : optional, string
+        Default is 'low'. Filter type can be 'low', 'high' or 'band'.
+    order : optional, int
+        Default is 4. The order of the Butterworth filter.
+
+    Returns
+    -------
+    y : numpy array
+        The filtered data.
+
+    """
+    sos = butter(cutoff, fs, btype=btype, order=order)
+    y = sig.sosfiltfilt(sos, x, **kwargs)
+    return y
+
+
+def nan_butter_filter(x, cutoff, fs, axis=1, btype="low", order=4, dic=20, **kwargs):
+    """Apply Butterworth filter to data using scipy.signal.filtfilt for 2D array
+    along the given axis. Can handle some NaN values and 2D arrays.
+
+    Parameters
+    ----------
+    x : array
+        The data to be filtered. Should be evenly sampled.
+    cutoff : array
+        Cutoff frequency, e.g. roughly speaking, the frequency at which the
+        filter acts. Units should be same as for fs paramter.
+    fs : float
+        Sampling frequency of signal. Units should be same as for cutoff
+        parameter.
+    axis : optional, int
+        Axis along which to perform operation, default is 1.
+    btype : optional, string
+        Default is 'low'. Filter type can be 'low', 'high' or 'band'.
+    order : optional, int
+        Default is 4. The order of the Butterworth filter.
+    dic : optional, int
+        Smallest contiguous region size, in number of data points, over which
+        to perform the filtering. Default is 20.
+
+    Returns
+    -------
+    y : numpy array
+        The filtered data.
+
+    """
+    ndim = np.ndim(x)
+    y = np.full_like(x, np.nan)
+
+    def _filthelp(x_, cutoff, fs, btype, order, dic, **kwargs):
+        y_ = np.full_like(x_, np.nan)
+        nans = np.isnan(x_)
+        if nans.any():
+            idxs = contiguous_regions(~nans)
+            di = idxs[:, 1] - idxs[:, 0]
+            iidxs = np.argwhere(di > dic)
+            for j in iidxs[:, 0]:
+
+                sl = slice(*idxs[j, :])
+                y_[sl] = butter_filter(x_[sl], cutoff, fs, btype, **kwargs)
+        else:
+            y_ = butter_filter(x_, cutoff, fs, btype, **kwargs)
+        return y_
+
+    if ndim == 1:
+        y = _filthelp(x, cutoff, fs, btype, order, dic, **kwargs)
+    if ndim == 2:
+        nr, nc = x.shape
+        if axis == 0:
+            for i in range(nc):
+                y[:, i] = _filthelp(x[:, i], cutoff, fs, btype, order, dic, **kwargs)
+        if axis == -1 or axis == 1:
+            for i in range(nr):
+                y[i, :] = _filthelp(x[i, :], cutoff, fs, btype, order, dic, **kwargs)
+        return y
+
+    
+def nan_butter_filter_renan(x, cutoff, fs, axis=1, btype="low", order=4, dic=20, **kwargs):
+    # Could probably do this with decorators...
+    nans = np.isnan(x)
+    y = nan_butter_filter(x, cutoff, fs, axis, btype, order, dic, **kwargs)
+    y[nans] = np.nan
+    return y
