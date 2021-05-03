@@ -23,6 +23,7 @@ import utils
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 import gsw
+import utm
 
 
 def mode(x, **kwargs):
@@ -330,10 +331,47 @@ sbe53a.p.plot(ax=ax)
 # Depth of the ADCPs
 
 # %%
+# Nominal depth of the downward looking ADCP
 
-# %%
-# datavars = {
-#     "SP": (["i", "time"], ctd.SP, {"Variable": "Practical salinity"}),
+# shallowest
+depth_sbe_52 = float(sbe52a.depth.mean().values)
+depth_upward = float(dom.depth.mean().values - 2.)  # Kind of a guess...
+depth_sbe_51 = float(sbe51a.depth.mean().values)
+depth_downward = float(dom.depth.mean().values)
+depth_sbe_53 = float(sbe53a.depth.mean().values)
+# deepest
+depths = [depth_sbe_52, depth_upward, depth_sbe_51, depth_downward, depth_sbe_53]
+instruments = ["SBE37", "ADCP", "SBE37", "ADCP", "SBE37"]
+# Stack point data
+depth_stack = np.stack((sbe52a.depth.values, np.nan*dom.depth.values, sbe51a.depth.values, dom.depth.values, sbe53a.depth.values), axis=0)
+p_stack = np.stack((sbe52a.p.values, np.nan*dom.p.values, sbe51a.p.values, dom.p.values, sbe53a.p.values), axis=0)
+t_stack = np.stack((sbe52a.t.values, upm.t.values, sbe51a.t.values, dom.t.values, sbe53a.t.values), axis=0)
+SP_stack = np.stack((sbe52a.SP.values, np.nan*sbe52a.SP.values, sbe51a.SP.values, np.nan*sbe52a.SP.values, sbe53a.SP.values), axis=0)
+
+# Stack ranged data
+depth_adcp = np.hstack(((depth_upward - upm.distance).values[::-1], (depth_downward + dom.distance).values))
+u_stack = np.hstack((upm.u.values[:, ::-1], dom.u.values))
+v_stack = np.hstack((upm.v.values[:, ::-1], dom.v.values))
+w_stack = np.hstack((upm.w.values[:, ::-1], dom.w.values))
+
+coords = {
+    "time": (["time"], dom.time.values),
+    "depth_adcp": (["depth_adcp"], depth_adcp),
+    "depth_nominal": (["instrument"], depths),
+    "instrument": (["instrument"], instruments),
+    "lon": ([], dom.lon.values),
+    "lat": ([], dom.lat.values),
+#     "x": ([], ctd.x),
+#     "y": ([], ctd.y),
+#     "zone_letter": ([], ctd.zone_letter),
+#     "zone_number": ([], ctd.zone_number),
+}
+
+datavars = {
+    "depth": (["instrument", "time"], depth_stack, {"Variable": "Depth [m]"}),
+    "p": (["instrument", "time"], p_stack, {"Variable": "Pressure [dbar]"}),
+    "t": (["instrument", "time"], t_stack, {"Variable": "Temperature (in situ) [deg C]"}),
+    "SP": (["instrument", "time"], SP_stack, {"Variable": "Practical salinity [PSU]"}),
 #     "t": (["i", "time"], ctd.t, {"Variable": "Temperature (in situ)"}),
 #     "CT": (["i", "time"], ctd.CT, {"Variable": "Conservative temperature"}),
 #     "SA": (["i", "time"], ctd.SA, {"Variable": "Absolute salinity"}),
@@ -344,9 +382,9 @@ sbe53a.p.plot(ax=ax)
 #         {"Variable": "Potential density referenced to 0 dbar"},
 #     ),
 #     "N2": (["i_mid", "time"], ctd.N2, {"Variable": "Buoyancy frequency"}),
-#     "u": (["depth_adcp", "time"], adcp.u, {"Variable": "Eastward velocity"}),
-#     "v": (["depth_adcp", "time"], adcp.v, {"Variable": "Northward velocity"}),
-#     "w": (["depth_adcp", "time"], adcp.w, {"Variable": "Vertical velocity"}),
+    "u": (["time", "depth_adcp"], u_stack, {"Variable": "Eastward velocity [m s-1]"}),
+    "v": (["time", "depth_adcp"], v_stack, {"Variable": "Northward velocity [m s-1]"}),
+    "w": (["time", "depth_adcp"], w_stack, {"Variable": "Vertical velocity [m s-1]"}),
 #     "SPa": (["depth_adcp", "time"], adcp.SP, {"Variable": "Practical salinity"}),
 #     "ta": (["depth_adcp", "time"], adcp.t, {"Variable": "Temperature (in situ)"}),
 #     "CTa": (["depth_adcp", "time"], adcp.CT, {"Variable": "Conservative temperature"}),
@@ -357,22 +395,18 @@ sbe53a.p.plot(ax=ax)
 #         adcp.sig0,
 #         {"Variable": "Potential density referenced to 0 dbar"},
 #     ),
-# }
+}
 
-# coords = {
-#     "time": (["time"], utils.datenum_to_datetime(ctd.time)),
-#     "depth": (["i", "time"], ctd.depth),
-#     "depth_adcp": (["depth_adcp"], adcp.depth),
-#     "depth_nominal": (["i"], ctd.depth_nominal),
-#     "lon": ([], ctd.lon),
-#     "lat": ([], ctd.lat),
-#     "x": ([], ctd.x),
-#     "y": ([], ctd.y),
-#     "zone_letter": ([], ctd.zone_letter),
-#     "zone_number": ([], ctd.zone_number),
-#     "p": (["i", "time"], ctd.p),
-#     "p_mid": (["i_mid", "time"], ctd.p_mid),
-# }
+ds = xr.Dataset(datavars, coords)
+
+# Stuff some other ADCP variables
+for i, var in enumerate(["a1", "a2", "a3", "a4", "q1", "q2", "q3", "q4", "err"]):
+    var_stack = np.hstack((upm[var].values[:, ::-1], dom[var].values))
+    ds[var] = (ds.u.dims, var_stack, dom[var].attrs)
+    
+
+# %%
+ds.to_netcdf("../proc/downstream_deep_mooring_2018.nc")
 
 # %%
 # ds["turb_RBR"] = (sVm.p.dims, virta.turb, virta.turb.attrs)
