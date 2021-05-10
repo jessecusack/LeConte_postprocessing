@@ -206,10 +206,13 @@ importlib.reload(utils)
 
 # %%
 fig, ax = plt.subplots(figsize=(15, 5))
-ax.plot(utils.butter_filter(adm.p, 1/3600, 1/10))
-ax.plot(utils.butter_filter(adm.p, 1/(3*86400), 1/10))
+ax.invert_yaxis()
+ax.plot(adm.time, utils.butter_filter(adm.p, 1/3600, 1/10))
+# ax.plot(utils.butter_filter(adm.p, 1/(3*86400), 1/10))
+ax.set_ylabel("Pressure [dbar]")
 
 fig, ax = plt.subplots(figsize=(15, 5))
-ax.plot(adm.pitch, '.')
+ax.plot(adm.time, adm.pitch, '.')
+ax.set_ylabel("pitch [deg]")
 
 # %%
