@@ -86,19 +86,39 @@ The [oce](https://dankelley.github.io/oce/) package in R has a lot of tools for 
 brew install r
 ```
 
-Optionally install the GUI editor 'Rstudio', which is a bit like matlab or spyder (`brew install rstudio`). 
+Optionally install the GUI editor 'Rstudio', which is a bit like matlab (`brew install rstudio`).
 
-Run R and install the required packages:
+To get oce, first start up R with the command
 
 ```
 R
-install.packages("oce")
-install.packages("ncdf4")
-install.packages("RSQLite")  # For loading rsk files.
-q()
 ```
 
-Then the processing scripts can be run from the terminal, e.g.:
+then either install the standard package which is updated infrequently,
+
+```
+install.packages("oce")
+```
+
+or install the frequently updated (but potentially buggy) development branch (recommended),
+
+```
+install.packages("remote")
+remotes::install_github("dankelley/oce", ref="develop")
+```
+
+In order to install the development branch successfully I had to install gfortran using the [downloadable dmg](https://github.com/fxcoudert/gfortran-for-macOS/releases), rather than the version that comes with `brew install gcc`.
+
+The R code I have written also requires the following
+
+```
+install.packages("ncdf4")
+install.packages("RSQLite")  # For loading rsk files
+install.packages("yaml")
+install.packages("numDeriv")  # Numerical derivatives
+```
+
+With all the above installed, it should be possible to run the processing scripts from the terminal, e.g.:
 
 ```
 Rscript ABLE_deep_2018.R
