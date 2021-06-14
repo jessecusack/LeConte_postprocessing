@@ -135,6 +135,21 @@ IRkernel::installspec()
 q()
 ```
 
+### Installing oce from source
+
+To install oce from source, first fork and clone the oce repository. From the folder that now contains the local oce repository, use:
+
+```
+R CMD build --no-build-vignettes oce
+R CMD install <FILENAME>.tar.gz
+```
+
+where `FILENAME` is probably something like `oce_1.5-0.tar.gz`. Attempting to build the vignettes was throwing errors so I didn't bother.
+
+### R notes
+
+Many different plots of `adp` objects can be made, see `?"plot,adp-method"`. Control the colorbar with `zlim` argument e.g. `zlim = c(-0.1, 0.1)`.
+
 ## ADCP processing with MATLAB
 
 Dylan Winters at OSU has written some great code for parsing ADCP data. This requires matlab with the navigation and robotics toolboxes installed (and perhaps others, I'm not sure)
