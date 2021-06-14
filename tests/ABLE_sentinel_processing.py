@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: lcpp-dev
 #     language: python
@@ -51,7 +51,7 @@ sV = xr.open_dataset("../proc/ABLE_sentinel_2018_enu.nc")
 sV = sV.set_coords(["lon", "lat"])
 sV["time"] = utils.POSIX_to_datetime(sV.time.values)
 # Vertical beam velocity is not re-orientated by oce for some reason.
-sV["vv"] = (sV.vv.dims, -sV.vv.values, sV.vv.attrs)
+# sV["vv"] = (sV.vv.dims, -sV.vv.values, sV.vv.attrs)
 # Conflicts with roll operation
 rol = sV["roll"]
 sV = sV.drop_vars("roll")
