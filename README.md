@@ -144,11 +144,21 @@ R CMD build --no-build-vignettes oce
 R CMD install <FILENAME>.tar.gz
 ```
 
-where `FILENAME` is probably something like `oce_1.5-0.tar.gz`. Attempting to build the vignettes was throwing errors so I didn't bother.
+where `FILENAME` is probably something like `oce_1.5-0.tar.gz`. Attempting to build the vignettes was throwing errors so I didn't bother. 
+
+Installing oce this was also requires gfortran be installed using the method described in the section above.
+
+To keep my github fork of the repository up to date, do something like...
+
+```
+cd oce
+git pull upstream develop
+git push origin develop
+```
 
 ### R notes
 
-Many different plots of `adp` objects can be made, see `?"plot,adp-method"`. Control the colorbar with `zlim` argument e.g. `zlim = c(-0.1, 0.1)`.
+Many different plots of `adp` objects can be made, see `?"plot,adp-method"`. Control the colorbar with `zlim` argument e.g. `zlim = c(-0.1, 0.1)`. Restrict ranges with `subset`.
 
 ## ADCP processing with MATLAB
 
