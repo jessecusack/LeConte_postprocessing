@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.11.4
 #   kernelspec:
 #     display_name: lcpp-dev
 #     language: python
@@ -22,6 +22,7 @@ import numpy as np
 import utils
 import matplotlib.pyplot as plt
 import scipy.stats as stats
+import utm
 
 
 def mode(x, **kwargs):
@@ -50,8 +51,10 @@ def interval_to_mid(intervals):
 sV = xr.open_dataset("../proc/ABLE_sentinel_2018_enu.nc")
 sV = sV.set_coords(["lon", "lat"])
 sV["time"] = utils.POSIX_to_datetime(sV.time.values)
-# Vertical beam velocity is not re-orientated by oce for some reason.
-# sV["vv"] = (sV.vv.dims, -sV.vv.values, sV.vv.attrs)
+
+x, y, *_ = utm.from_latlon(sV.lat, sV.lon)
+sV = sV.assign_coords({"x": x, "y": y})
+
 # Conflicts with roll operation
 rol = sV["roll"]
 sV = sV.drop_vars("roll")
@@ -88,14 +91,78 @@ sVp = sV.isel(time=keep).isel(time=slice(cut_ends, -cut_ends))
 sVp.p.plot.line('.')
 
 # %% [markdown]
+# ## Quality control
+#
+# Note [Marion's document](https://escholarship.org/content/qt6xd149s8/qt6xd149s8.pdf)
+
+# %%
+# qc_err0 = 0.3
+# qc_err1 = 0.5
+qc_err = 0.15  # error velocity
+qc_q = 110  # correlation
+qc_uv = 2.0  # horizontal velocity
+qc_w = 1.5  # vertical velocity
+qc_a = 30 # echo intensity
+
+# %%
+qc_u_bad = np.abs(sVp.u) > qc_uv
+qc_v_bad = np.abs(sVp.v) > qc_uv
+qc_w_bad = np.abs(sVp.w) > qc_w
+qc_vv_bad = np.abs(sVp.vv) > qc_w
+qc_err_bad = np.abs(sVp.err) > qc_err
+qc_q1_good = sVp.q1 > qc_q
+qc_q2_good = sVp.q2 > qc_q
+qc_q3_good = sVp.q3 > qc_q
+qc_q4_good = sVp.q4 > qc_q
+
+qc_q_bad = (qc_q1_good.astype(int) + qc_q2_good.astype(int) + qc_q3_good.astype(int) + qc_q4_good.astype(int)) <= 3
+
+# %%
+uv_reject = (qc_q_bad.astype(int) + qc_err_bad.astype(int) + qc_u_bad.astype(int) + qc_v_bad.astype(int)) > 1
+w_reject = (qc_q_bad.astype(int) + qc_err_bad.astype(int) + qc_w_bad.astype(int)) > 1
+vv_reject = (qc_q_bad.astype(int) + qc_err_bad.astype(int) + qc_vv_bad.astype(int)) > 1
+
+# %%
+fig, axs = plt.subplots(3, 1, sharex=True, sharey=True, figsize=(10, 10))
+uv_reject.plot(ax=axs[0])
+w_reject.plot(ax=axs[1])
+vv_reject.plot(ax=axs[2])
+
+
+# %% [markdown]
+# Remove velocity using QC.
+
+# %%
+sVqc = sVp.copy()
+
+u = sVqc.u.values
+u[uv_reject] = np.nan
+sVqc["u"] = (sVqc.u.dims, u, sVqc.u.attrs)
+
+v = sVqc.v.values
+v[uv_reject] = np.nan
+sVqc["v"] = (sVqc.v.dims, v, sVqc.v.attrs)
+
+w = sVqc.w.values
+w[w_reject] = np.nan
+sVqc["w"] = (sVqc.w.dims, w, sVqc.w.attrs)
+
+vv = sVqc.vv.values
+vv[vv_reject] = np.nan
+sVqc["vv"] = (sVqc.vv.dims, vv, sVqc.vv.attrs)
+
+# %% [markdown]
+# ## Time binning
+
+# %% [markdown]
 # Bin average data to reduce size and errors. 
 #
 # First make bins.
 
 # %%
 # Time bin start and end to nearest minute. This will cut off some data.
-tstart = (sVp.time[0].values + np.timedelta64(30, 's')).astype('datetime64[m]')
-tend = sVp.time[-1].values.astype('datetime64[m]')
+tstart = (sVqc.time[0].values + np.timedelta64(30, 's')).astype('datetime64[m]')
+tend = sVqc.time[-1].values.astype('datetime64[m]')
 
 timebins = np.arange(tstart, tend, np.timedelta64(dt, 's'))
 
@@ -103,7 +170,7 @@ timebins = np.arange(tstart, tend, np.timedelta64(dt, 's'))
 # Group and take mean.
 
 # %%
-gb = sVp.groupby_bins("time", timebins)
+gb = sVqc.groupby_bins("time", timebins)
 sVa = gb.mean(skipna=True, keep_attrs=True)
 
 # Use mid time as dimension, rather than Interval.
@@ -114,7 +181,7 @@ sVa = sVa.rename({"time_bins": "time"})
 # Mean of heading should be performed using circular mean. (Technically, so should pitch and roll, but for small angles the noncircular mean is ok)
 
 # %%
-sVa["heading"] = (["time"], sVp.heading.groupby_bins("time", timebins).reduce(stats.circmean, high=360.).values)
+sVa["heading"] = (["time"], sVqc.heading.groupby_bins("time", timebins).reduce(stats.circmean, high=360.).values)
 
 # %% [markdown]
 # ## Cut off data above surface
@@ -409,3 +476,5 @@ ax.plot_wireframe(T, D, ds_.a2.values, rstride=1, cstride=1)
 
 ax.view_init(elev=45., azim=120)
 
+
+# %%
