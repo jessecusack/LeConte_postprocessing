@@ -4,21 +4,20 @@ source("ncwrite.R")
 
 # Parameters
 file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/ABLE_Deep/16670013.000"
-# pmin <- 120.  # cut off pressure [dbar]
-lat <- 56.835592	
+pmin <- 120.  # cut off pressure [dbar]
+lat <- 56.835592
 lon <- -132.3572915
 dec <- 19.32  # magnetic declination
-# n <- 6  # ensemble averaging
 ori <- "upward"  # orientation
 
 # Load data and remove times where the instrument was not in the water
 file <- path.expand(file)
 adp <- read.adp(file, latitude = lat, longitude = lon)
 adp <- oceSetMetadata(adp, 'orientation', ori)
-# adp <- subset(adp, pressure > pmin)
 
-# Ensemble average the data, 
-# adp <- adpEnsembleAverage(adp, n = n)
+# Subset data using pressure
+adp <- subset(adp, pressure > pmin)
+
 # Convert to xyz coordinates
 xyz <- beamToXyz(adp)
 
