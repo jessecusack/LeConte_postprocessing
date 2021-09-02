@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.1
+#       jupytext_version: 1.11.4
 #   kernelspec:
 #     display_name: lcpp-dev
 #     language: python
@@ -391,7 +391,7 @@ ds = xr.Dataset(datavars, coords)
 for i, var in enumerate(["a1", "a2", "a3", "a4", "q1", "q2", "q3", "q4", "err"]):
     var_stack = np.hstack((upm[var].values[:, ::-1], dom[var].values))
     ds[var] = (ds.u.dims, var_stack, dom[var].attrs)
-    
+
 
 # %% [markdown]
 # Extra thermodynamic stuff.
@@ -407,5 +407,3 @@ ds["depth"] = (ds.p.dims, -ds.z, {"Variable": "depth [m]"})
 
 # %%
 ds.to_netcdf("../proc/downstream_deep_mooring_2018.nc")
-
-# %%

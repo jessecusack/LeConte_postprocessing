@@ -256,8 +256,7 @@ adm["depth"] = (adm.p.dims, -adm.z, {"units": "m", "long_name": "depth"})
 adm
 
 # %%
-# adm.to_netcdf("../proc/ABLE_deep_mooring_2018.nc")
-adm.to_netcdf("test.nc")
+adm.to_netcdf("../proc/ABLE_deep_mooring_2018.nc")
 
 # %% [markdown]
 # # Check some things...
@@ -279,5 +278,3 @@ ax.set_ylabel("Pressure [dbar]")
 fig, ax = plt.subplots(figsize=(15, 5))
 ax.plot(adm.time, adm.pitch, '.')
 ax.set_ylabel("pitch [deg]")
-
-# %%
