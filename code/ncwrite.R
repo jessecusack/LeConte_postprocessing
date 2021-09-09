@@ -1,3 +1,5 @@
+library(ncdf4)
+
 adp_write <- function(adp, filePath){
   # Writes data from an oce ADP object to a netcdf file.
   #
@@ -128,7 +130,9 @@ adp_write <- function(adp, filePath){
   dlname <- "pitch"
   pitch_def <- ncvar_def("pitch", "degrees", list(timedim), FillValue, dlname, prec="float")
   dlname <- "roll"
-  roll_def <- ncvar_def("roll", "degrees", list(timedim), FillValue, dlname, prec="float")
+    # Confusingly, but deliberately, we name the variable 'rol' below because otherwise 
+    # we get conflicts with the xarray roll operation.
+  roll_def <- ncvar_def("rol", "degrees", list(timedim), FillValue, dlname, prec="float")
   dlname <- "heading"
   heading_def <- ncvar_def("heading", "degrees", list(timedim), FillValue, dlname, prec="float")
   
@@ -353,7 +357,9 @@ enu_write <- function(adp, filePath){
   dlname <- "pitch"
   pitch_def <- ncvar_def("pitch", "degrees", list(timedim), FillValue, dlname, prec="float")
   dlname <- "roll"
-  roll_def <- ncvar_def("roll", "degrees", list(timedim), FillValue, dlname, prec="float")
+    # Confusingly, but deliberately, we name the variable 'rol' below because otherwise 
+    # we get conflicts with the xarray roll operation.
+  roll_def <- ncvar_def("rol", "degrees", list(timedim), FillValue, dlname, prec="float")
   dlname <- "heading"
   heading_def <- ncvar_def("heading", "degrees", list(timedim), FillValue, dlname, prec="float")
   

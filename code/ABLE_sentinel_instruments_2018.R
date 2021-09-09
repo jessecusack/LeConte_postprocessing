@@ -1,5 +1,4 @@
 library(oce)
-library(ncdf4)
 source("ncwrite.R")
 
 # Parameters
