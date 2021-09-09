@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta
+import pytz
 
 import numpy as np
 import scipy.io as io
@@ -95,7 +96,7 @@ def datenum_to_datetime(datenum):
     return dt
 
 
-def POSIX_to_datetime(POSIX):
+def POSIX_to_datetime(POSIX, tz=pytz.utc):
     """
     Convert POSIX timestamps into python datetimes.
 
@@ -103,6 +104,8 @@ def POSIX_to_datetime(POSIX):
     ----------
     POSIX : array_like
         A POSIX timestamp or array of timestamps.
+    tz : tzinfo class
+        Time zone information, the default is to assume UTC, e.g. tz=pytz.utc
 
     Returns
     -------
@@ -114,7 +117,7 @@ def POSIX_to_datetime(POSIX):
     def convert(POSIX):
         try:
             return (
-                datetime.fromtimestamp(POSIX)
+                datetime.fromtimestamp(POSIX, tz)
             )
         except ValueError:
             return np.nan
