@@ -8,12 +8,16 @@ lon <- -132.3616833
 dec <- 19.32  # magnetic declination
 # n <- 8  # ensemble averaging
 ori <- "upward"  # orientation
+dmax <- 150. # cut off distance [m]
 
 
 # Load data and remove times where the instrument was not in the water
 file <- path.expand(file)
 adp <- read.adp(file, latitude = lat, longitude = lon)
 adp <- oceSetMetadata(adp, 'orientation', ori)
+
+# Subset data using distance
+adp <- subset(adp, distance < dmax)
 
 # Ensemble average the data, 
 # adp <- adpEnsembleAverage(adp, n = n)

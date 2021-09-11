@@ -3,7 +3,7 @@ source("ncwrite.R")
 
 # Parameters
 file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/SN_54000.000"
-# pmin <- 70.  # cut off pressure [dbar]
+pmin <- 70.  # cut off pressure [dbar]
 lat <- 56.83596667
 lon <- -132.3616833
 dec <- 19.32  # magnetic declination
@@ -15,7 +15,7 @@ ori <- "downward"  # orientation
 file <- path.expand(file)
 adp <- read.adp(file, latitude = lat, longitude = lon)
 adp <- oceSetMetadata(adp, 'orientation', ori)
-# adp <- subset(adp, pressure > pmin)
+adp <- subset(adp, pressure > pmin)
 
 # Ensemble average the data, 
 # adp <- adpEnsembleAverage(adp, n = n)
