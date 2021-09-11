@@ -1,9 +1,15 @@
 library(ncdf4)
 
-v_units <- "m s-1"  # Velocity units
+velocity_units <- "m s-1"
 a_units <- "dB"  # Echo intensity units
 g_units <- "percent"  # Percent good units
 q_units <- ""  # Correlation units
+time_units <- "s"
+temperature_units <- "degree_C"
+salinity_units <- ""  # Practical salinity is technically unitless (PSU)
+turbidity_units <- ""  # Turbidity is technically unitless (NTU)
+pressure_units <- "dbar"  # Pressure units
+conductivity_units <- "S m-1"  # Conductivity units
 
 adp_write <- function(adp, filePath, overwrite=FALSE){
   # Writes data from an oce ADP object to a netcdf file.
@@ -47,48 +53,48 @@ adp_write <- function(adp, filePath, overwrite=FALSE){
   # Create dimensions
   time <- adp[['time']]
   dist <- adp[['distance', 'numeric']]
-  timedim <- ncdim_def("time", "POSIXct", as.double(time))    #time formatting FIX
-  depthdim <- ncdim_def("distance", "m", as.double(dist))
+  timedim <- ncdim_def("time", "s", as.double(time), longname="POSIX_time")
+  depthdim <- ncdim_def("distance", "m", as.double(dist), longname="mast_distance")
 
   # Define latitude and longitude
-  lon_def <- ncvar_def("lon", "degrees", list(), FillValue, "longitude_degrees_east", prec="float")
-  lat_def <- ncvar_def("lat", "degrees", list(), FillValue, "latitude_degrees_north", prec="float")
+  lon_def <- ncvar_def("lon", "degree_east", list(), FillValue, "longitude", prec="float")
+  lat_def <- ncvar_def("lat", "degree_north", list(), FillValue, "latitude", prec="float")
 
   vars <- list(lon_def, lat_def)
 
   # Define velocity variables
-  dlname <- "velocity_beam_1"
-  v1_def <- ncvar_def("v1", v_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "velocity_beam_2"
-  v2_def <- ncvar_def("v2", v_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "velocity_beam_3"
-  v3_def <- ncvar_def("v3", v_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "velocity_beam_4"
-  v4_def <- ncvar_def("v4", v_units, list(timedim, depthdim), FillValue, dlname, prec="float")
+  dlname <- "along_beam_velocity_1"
+  v1_def <- ncvar_def("v1", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
+  dlname <- "along_beam_velocity_2"
+  v2_def <- ncvar_def("v2", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
+  dlname <- "along_beam_velocity_3"
+  v3_def <- ncvar_def("v3", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
+  dlname <- "along_beam_velocity_4"
+  v4_def <- ncvar_def("v4", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
   vars <- append(vars, list(v1_def, v2_def, v3_def, v4_def))
 
   # Define echo intensity variables
-  dlname <- "echo_intensity_beam_1"
+  dlname <- "echo_intensity_1"
   a1_def <- ncvar_def("a1", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_beam_2"
+  dlname <- "echo_intensity_2"
   a2_def <- ncvar_def("a2", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_beam_3"
+  dlname <- "echo_intensity_3"
   a3_def <- ncvar_def("a3", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_beam_4"
+  dlname <- "echo_intensity_4"
   a4_def <- ncvar_def("a4", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
   vars <- append(vars, list(a1_def, a2_def, a3_def, a4_def))
 
   # Define percent good, if it exists
   if (g_exists) {
-    dlname <- "percent_good_beam_1"
+    dlname <- "percent_good_1"
     g1_def <- ncvar_def("g1", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_beam_2"
+    dlname <- "percent_good_2"
     g2_def <- ncvar_def("g2", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_beam_3"
+    dlname <- "percent_good_3"
     g3_def <- ncvar_def("g3", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_beam_4"
+    dlname <- "percent_good_4"
     g4_def <- ncvar_def("g4", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(g1_def, g2_def, g3_def, g4_def))
@@ -96,13 +102,13 @@ adp_write <- function(adp, filePath, overwrite=FALSE){
 
   # Define correlation, if it exists
   if (q_exists) {
-    dlname <- "correlation_beam_1"
+    dlname <- "correlation_magnitude_1"
     q1_def <- ncvar_def("q1", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_beam_2"
+    dlname <- "correlation_magnitude_2"
     q2_def <- ncvar_def("q2", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_beam_3"
+    dlname <- "correlation_magnitude_3"
     q3_def <- ncvar_def("q3", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_beam_4"
+    dlname <- "correlation_magnitude_4"
     q4_def <- ncvar_def("q4", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(q1_def, q2_def, q3_def, q4_def))
@@ -110,21 +116,21 @@ adp_write <- function(adp, filePath, overwrite=FALSE){
 
   # Define 5th beam variables, if they exist
   if (is_sentinelV) {
-    dlname <- "velocity_beam_5"
-    vv_def <- ncvar_def("vv", v_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "echo_intensity_beam_5"
+    dlname <- "along_beam_velocity_5"
+    vv_def <- ncvar_def("vv", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
+    dlname <- "echo_intensity_5"
     va_def <- ncvar_def("va", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(vv_def, va_def))
 
     if (g_exists) {
-      dlname <- "percent_good_beam_5"
+      dlname <- "percent_good_5"
       vg_def <- ncvar_def("vg", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
       vars <- append(vars, list(vg_def))
     }
 
     if (q_exists) {
-      dlname <- "correlation_beam_5"
+      dlname <- "correlation_magnitude_5"
       vq_def <- ncvar_def("vq", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
       vars <- append(vars, list(vq_def))
     }
@@ -132,31 +138,31 @@ adp_write <- function(adp, filePath, overwrite=FALSE){
   }
 
   # Orientation variables
-  dlname <- "pitch"
-  pitch_def <- ncvar_def("pitch", "degrees", list(timedim), FillValue, dlname, prec="float")
-  dlname <- "roll"
+  dlname <- "platform_pitch"
+  pitch_def <- ncvar_def("pitch", "degree", list(timedim), FillValue, dlname, prec="float")
+  dlname <- "platform_roll"
     # Confusingly, but deliberately, we name the variable 'rol' below because otherwise
     # we get conflicts with the xarray roll operation.
-  roll_def <- ncvar_def("rol", "degrees", list(timedim), FillValue, dlname, prec="float")
-  dlname <- "heading"
-  heading_def <- ncvar_def("heading", "degrees", list(timedim), FillValue, dlname, prec="float")
+  roll_def <- ncvar_def("rol", "degree", list(timedim), FillValue, dlname, prec="float")
+  dlname <- "platform_yaw"
+  heading_def <- ncvar_def("heading", "degree", list(timedim), FillValue, dlname, prec="float")
 
   vars <- append(vars, list(pitch_def, roll_def, heading_def))
 
   # Physical variables, if they exist
   if (is_temperature) {
-    dlname <- "temperature"
-    t_def <- ncvar_def("t", "deg C", list(timedim), FillValue, dlname, prec="float")
+    dlname <- "sea_water_temperature"
+    t_def <- ncvar_def("t", temperature_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(t_def))
   }
   if (is_salinity) {
-    dlname <- "salinity"
-    SP_def <- ncvar_def("SP", "PSU", list(timedim), FillValue, dlname, prec="float")
+    dlname <- "sea_water_practical_salinity"
+    SP_def <- ncvar_def("SP", salinity_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(SP_def))
   }
   if (is_pressure) {
-    dlname <- "pressure"
-    p_def <- ncvar_def("p", "dbar", list(timedim), FillValue, dlname, prec="float")
+    dlname <- "sea_water_pressure"
+    p_def <- ncvar_def("p", pressure_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(p_def))
   }
 
@@ -280,48 +286,48 @@ enu_write <- function(adp, filePath, overwrite=FALSE){
   # Create dimensions
   time <- adp[['time']]
   dist <- adp[['distance', 'numeric']]
-  timedim <- ncdim_def("time", "POSIXct", as.double(time))    #time formatting FIX
-  depthdim <- ncdim_def("distance", "m", as.double(dist))
+  timedim <- ncdim_def("time", "s", as.double(time), longname="POSIX_time")
+  depthdim <- ncdim_def("distance", "m", as.double(dist), longname="mast_distance")
 
   # Define latitude and longitude
-  lon_def <- ncvar_def("lon", "degrees", list(), FillValue, "longitude_degrees_east", prec="float")
-  lat_def <- ncvar_def("lat", "degrees", list(), FillValue, "latitude_degrees_north", prec="float")
+  lon_def <- ncvar_def("lon", "degree_east", list(), FillValue, "longitude", prec="float")
+  lat_def <- ncvar_def("lat", "degree_north", list(), FillValue, "latitude", prec="float")
 
   vars <- list(lon_def, lat_def)
 
   # Define velocity variables
   dlname <- "eastward_sea_water_velocity"
-  u_def <- ncvar_def("u", v_units, list(timedim, depthdim), FillValue, dlname, prec="float")
+  u_def <- ncvar_def("u", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
   dlname <- "northward_sea_water_velocity"
-  v_def <- ncvar_def("v", v_units, list(timedim, depthdim), FillValue, dlname, prec="float")
+  v_def <- ncvar_def("v", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
   dlname <- "upward_sea_water_velocity"
-  w_def <- ncvar_def("w", v_units, list(timedim, depthdim), FillValue, dlname, prec="float")
+  w_def <- ncvar_def("w", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
   dlname <- "error_velocity_in_sea_water"
-  e_def <- ncvar_def("err", v_units, list(timedim, depthdim), FillValue, dlname, prec="float")
+  e_def <- ncvar_def("err", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
   vars <- append(vars, list(u_def, v_def, w_def, e_def))
 
   # Define echo intensity variables
-  dlname <- "echo_intensity_beam_1"
+  dlname <- "echo_intensity_1"
   a1_def <- ncvar_def("a1", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_beam_2"
+  dlname <- "echo_intensity_2"
   a2_def <- ncvar_def("a2", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_beam_3"
+  dlname <- "echo_intensity_3"
   a3_def <- ncvar_def("a3", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_beam_4"
+  dlname <- "echo_intensity_4"
   a4_def <- ncvar_def("a4", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
   vars <- append(vars, list(a1_def, a2_def, a3_def, a4_def))
 
   # Define percent good, if it exists
   if (g_exists) {
-    dlname <- "percent_good_beam_1"
+    dlname <- "percent_good_1"
     g1_def <- ncvar_def("g1", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_beam_2"
+    dlname <- "percent_good_2"
     g2_def <- ncvar_def("g2", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_beam_3"
+    dlname <- "percent_good_3"
     g3_def <- ncvar_def("g3", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_beam_4"
+    dlname <- "percent_good_4"
     g4_def <- ncvar_def("g4", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(g1_def, g2_def, g3_def, g4_def))
@@ -329,13 +335,13 @@ enu_write <- function(adp, filePath, overwrite=FALSE){
 
   # Define correlation, if it exists
   if (q_exists) {
-    dlname <- "correlation_beam_1"
+    dlname <- "correlation_magnitude_1"
     q1_def <- ncvar_def("q1", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_beam_2"
+    dlname <- "correlation_magnitude_2"
     q2_def <- ncvar_def("q2", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_beam_3"
+    dlname <- "correlation_magnitude_3"
     q3_def <- ncvar_def("q3", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_beam_4"
+    dlname <- "correlation_magnitude_4"
     q4_def <- ncvar_def("q4", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(q1_def, q2_def, q3_def, q4_def))
@@ -343,21 +349,21 @@ enu_write <- function(adp, filePath, overwrite=FALSE){
 
   # Define 5th beam variables, if they exist
   if (is_sentinelV) {
-    dlname <- "upward_sea_water_velocity_beam_5"
-    vv_def <- ncvar_def("vv", v_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "echo_intensity_beam_5"
+    dlname <- "upward_sea_water_velocity"
+    vv_def <- ncvar_def("vv", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
+    dlname <- "echo_intensity_5"
     va_def <- ncvar_def("va", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(vv_def, va_def))
 
     if (g_exists) {
-      dlname <- "percent_good_beam_5"
+      dlname <- "percent_good_5"
       vg_def <- ncvar_def("vg", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
       vars <- append(vars, list(vg_def))
     }
 
     if (q_exists) {
-      dlname <- "correlation_beam_5"
+      dlname <- "correlation_magnitude_5"
       vq_def <- ncvar_def("vq", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
       vars <- append(vars, list(vq_def))
     }
@@ -365,31 +371,31 @@ enu_write <- function(adp, filePath, overwrite=FALSE){
   }
 
   # Orientation variables
-  dlname <- "pitch"
-  pitch_def <- ncvar_def("pitch", "degrees", list(timedim), FillValue, dlname, prec="float")
-  dlname <- "roll"
+  dlname <- "platform_pitch"
+  pitch_def <- ncvar_def("pitch", "degree", list(timedim), FillValue, dlname, prec="float")
+  dlname <- "platform_roll"
     # Confusingly, but deliberately, we name the variable 'rol' below because otherwise
     # we get conflicts with the xarray roll operation.
-  roll_def <- ncvar_def("rol", "degrees", list(timedim), FillValue, dlname, prec="float")
-  dlname <- "heading"
-  heading_def <- ncvar_def("heading", "degrees", list(timedim), FillValue, dlname, prec="float")
+  roll_def <- ncvar_def("rol", "degree", list(timedim), FillValue, dlname, prec="float")
+  dlname <- "platform_yaw"
+  heading_def <- ncvar_def("heading", "degree", list(timedim), FillValue, dlname, prec="float")
 
   vars <- append(vars, list(pitch_def, roll_def, heading_def))
 
   # Physical variables, if they exist
   if (is_temperature) {
-    dlname <- "temperature"
-    t_def <- ncvar_def("t", "deg C", list(timedim), FillValue, dlname, prec="float")
+    dlname <- "sea_water_temperature"
+    t_def <- ncvar_def("t", temperature_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(t_def))
   }
   if (is_salinity) {
-    dlname <- "salinity"
-    SP_def <- ncvar_def("SP", "PSU", list(timedim), FillValue, dlname, prec="float")
+    dlname <- "sea_water_practical_salinity"
+    SP_def <- ncvar_def("SP", salinity_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(SP_def))
   }
   if (is_pressure) {
-    dlname <- "pressure"
-    p_def <- ncvar_def("p", "dbar", list(timedim), FillValue, dlname, prec="float")
+    dlname <- "sea_water_pressure"
+    p_def <- ncvar_def("p", pressure_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(p_def))
   }
 
@@ -491,11 +497,6 @@ write_moored_ctd <- function(ctd, filePath, overwrite=FALSE) {
 
   # Parameters
   FillValue <- NaN
-  t_units <- "deg C"  # Temperature units
-  SP_units <- "PSU"  # Salinity units
-  turb_units <- "NTU"  # Turbidity units
-  p_units <- "dbar"  # Pressure units
-  C_units <- "mS/cm"  # Conductivity units
 
   # Logical checks
   is_salinity <- !is.null(ctd[['salinity']])
@@ -512,38 +513,38 @@ write_moored_ctd <- function(ctd, filePath, overwrite=FALSE) {
 
   # Create dimensions
   time <- ctd[['time']]
-  timedim <- ncdim_def("time", "POSIXct", as.double(time))    #time formatting FIX
+  timedim <- ncdim_def("time", "s", as.double(time), longname="POSIX_time")
 
   # Define latitude and longitude
-  lon_def <- ncvar_def("lon", "degrees", list(), FillValue, "longitude_degrees_east", prec="float")
-  lat_def <- ncvar_def("lat", "degrees", list(), FillValue, "latitude_degrees_north", prec="float")
+  lon_def <- ncvar_def("lon", "degree_east", list(), FillValue, "longitude", prec="float")
+  lat_def <- ncvar_def("lat", "degree_north", list(), FillValue, "latitude", prec="float")
 
   vars <- list(lon_def, lat_def)
 
   # Physical variables, if they exist
   if (is_temperature) {
-    dlname <- "temperature"
-    t_def <- ncvar_def("t", t_units, list(timedim), FillValue, dlname, prec="float")
+    dlname <- "sea_water_temperature"
+    t_def <- ncvar_def("t", temperature_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(t_def))
   }
   if (is_salinity) {
-    dlname <- "salinity"
-    SP_def <- ncvar_def("SP", SP_units, list(timedim), FillValue, dlname, prec="float")
+    dlname <- "sea_water_practical_salinity"
+    SP_def <- ncvar_def("SP", salinity_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(SP_def))
   }
   if (is_pressure) {
-    dlname <- "pressure"
-    p_def <- ncvar_def("p", p_units, list(timedim), FillValue, dlname, prec="float")
+    dlname <- "sea_water_pressure"
+    p_def <- ncvar_def("p", pressure_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(p_def))
   }
   if (is_conductivity) {
     dlname <- "conductivity"
-    C_def <- ncvar_def("C", C_units, list(timedim), FillValue, dlname, prec="float")
+    C_def <- ncvar_def("C", conductivity_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(C_def))
   }
   if (is_turbidity) {
-    dlname <- "turbidity"
-    turb_def <- ncvar_def("turb", turb_units, list(timedim), FillValue, dlname, prec="float")
+    dlname <- "sea_water_turbidity"
+    turb_def <- ncvar_def("turb", turbidity_units, list(timedim), FillValue, dlname, prec="float")
     vars <- append(vars, list(turb_def))
   }
 
