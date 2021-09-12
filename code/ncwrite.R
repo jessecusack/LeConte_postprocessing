@@ -2,7 +2,7 @@ library(ncdf4)
 
 velocity_units <- "m s-1"
 a_units <- "dB"  # Echo intensity units
-g_units <- "percent"  # Percent good units
+g_units <- ""  # Percent good units
 q_units <- ""  # Correlation units
 time_units <- "s"
 temperature_units <- "degree_C"
@@ -63,38 +63,29 @@ adp_write <- function(adp, filePath, overwrite=FALSE){
   vars <- list(lon_def, lat_def)
 
   # Define velocity variables
-  dlname <- "along_beam_velocity_1"
+  dlname <- "along_beam_velocity"
   v1_def <- ncvar_def("v1", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "along_beam_velocity_2"
   v2_def <- ncvar_def("v2", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "along_beam_velocity_3"
   v3_def <- ncvar_def("v3", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "along_beam_velocity_4"
   v4_def <- ncvar_def("v4", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
   vars <- append(vars, list(v1_def, v2_def, v3_def, v4_def))
 
   # Define echo intensity variables
-  dlname <- "echo_intensity_1"
+  dlname <- "echo_intensity"
   a1_def <- ncvar_def("a1", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_2"
   a2_def <- ncvar_def("a2", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_3"
   a3_def <- ncvar_def("a3", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_4"
   a4_def <- ncvar_def("a4", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
   vars <- append(vars, list(a1_def, a2_def, a3_def, a4_def))
 
   # Define percent good, if it exists
   if (g_exists) {
-    dlname <- "percent_good_1"
+    dlname <- "percent_good"
     g1_def <- ncvar_def("g1", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_2"
     g2_def <- ncvar_def("g2", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_3"
     g3_def <- ncvar_def("g3", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_4"
     g4_def <- ncvar_def("g4", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(g1_def, g2_def, g3_def, g4_def))
@@ -102,13 +93,10 @@ adp_write <- function(adp, filePath, overwrite=FALSE){
 
   # Define correlation, if it exists
   if (q_exists) {
-    dlname <- "correlation_magnitude_1"
+    dlname <- "correlation_magnitude"
     q1_def <- ncvar_def("q1", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_magnitude_2"
     q2_def <- ncvar_def("q2", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_magnitude_3"
     q3_def <- ncvar_def("q3", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_magnitude_4"
     q4_def <- ncvar_def("q4", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(q1_def, q2_def, q3_def, q4_def))
@@ -116,21 +104,20 @@ adp_write <- function(adp, filePath, overwrite=FALSE){
 
   # Define 5th beam variables, if they exist
   if (is_sentinelV) {
-    dlname <- "along_beam_velocity_5"
+    dlname <- "along_beam_velocity"
     vv_def <- ncvar_def("vv", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "echo_intensity_5"
     va_def <- ncvar_def("va", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(vv_def, va_def))
 
     if (g_exists) {
-      dlname <- "percent_good_5"
+      dlname <- "percent_good"
       vg_def <- ncvar_def("vg", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
       vars <- append(vars, list(vg_def))
     }
 
     if (q_exists) {
-      dlname <- "correlation_magnitude_5"
+      dlname <- "correlation_magnitude"
       vq_def <- ncvar_def("vq", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
       vars <- append(vars, list(vq_def))
     }
@@ -302,32 +289,26 @@ enu_write <- function(adp, filePath, overwrite=FALSE){
   v_def <- ncvar_def("v", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
   dlname <- "upward_sea_water_velocity"
   w_def <- ncvar_def("w", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "error_velocity_in_sea_water"
+  dlname <- "error_velocity"
   e_def <- ncvar_def("err", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
   vars <- append(vars, list(u_def, v_def, w_def, e_def))
 
   # Define echo intensity variables
-  dlname <- "echo_intensity_1"
+  dlname <- "echo_intensity"
   a1_def <- ncvar_def("a1", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_2"
   a2_def <- ncvar_def("a2", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_3"
   a3_def <- ncvar_def("a3", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-  dlname <- "echo_intensity_4"
   a4_def <- ncvar_def("a4", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
   vars <- append(vars, list(a1_def, a2_def, a3_def, a4_def))
 
   # Define percent good, if it exists
   if (g_exists) {
-    dlname <- "percent_good_1"
+    dlname <- "percent_good"
     g1_def <- ncvar_def("g1", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_2"
     g2_def <- ncvar_def("g2", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_3"
     g3_def <- ncvar_def("g3", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "percent_good_4"
     g4_def <- ncvar_def("g4", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(g1_def, g2_def, g3_def, g4_def))
@@ -335,13 +316,10 @@ enu_write <- function(adp, filePath, overwrite=FALSE){
 
   # Define correlation, if it exists
   if (q_exists) {
-    dlname <- "correlation_magnitude_1"
+    dlname <- "correlation_magnitude"
     q1_def <- ncvar_def("q1", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_magnitude_2"
     q2_def <- ncvar_def("q2", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_magnitude_3"
     q3_def <- ncvar_def("q3", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "correlation_magnitude_4"
     q4_def <- ncvar_def("q4", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(q1_def, q2_def, q3_def, q4_def))
@@ -351,19 +329,19 @@ enu_write <- function(adp, filePath, overwrite=FALSE){
   if (is_sentinelV) {
     dlname <- "upward_sea_water_velocity"
     vv_def <- ncvar_def("vv", velocity_units, list(timedim, depthdim), FillValue, dlname, prec="float")
-    dlname <- "echo_intensity_5"
+    dlname <- "echo_intensity"
     va_def <- ncvar_def("va", a_units, list(timedim, depthdim), FillValue, dlname, prec="float")
 
     vars <- append(vars, list(vv_def, va_def))
 
     if (g_exists) {
-      dlname <- "percent_good_5"
+      dlname <- "percent_good"
       vg_def <- ncvar_def("vg", g_units, list(timedim, depthdim), FillValue, dlname, prec="float")
       vars <- append(vars, list(vg_def))
     }
 
     if (q_exists) {
-      dlname <- "correlation_magnitude_5"
+      dlname <- "correlation_magnitude"
       vq_def <- ncvar_def("vq", q_units, list(timedim, depthdim), FillValue, dlname, prec="float")
       vars <- append(vars, list(vq_def))
     }
