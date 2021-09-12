@@ -11,7 +11,7 @@ turbidity_units <- ""  # Turbidity is technically unitless (NTU)
 pressure_units <- "dbar"  # Pressure units
 conductivity_units <- "S m-1"  # Conductivity units
 
-allowedCoordinates <- c('enu', 'beam')
+allowedCoordinates <- c('enu', 'xyz', 'beam')
 
 adp_write <- function(adp, filePath, overwrite=FALSE){
   # Writes data from an oce ADP object to a netcdf file.
@@ -83,6 +83,11 @@ adp_write <- function(adp, filePath, overwrite=FALSE){
     v2_def <- ncvar_def("v", velocity_units, list(timedim, depthdim), FillValue, "northward_sea_water_velocity", prec="float")
     v3_def <- ncvar_def("w", velocity_units, list(timedim, depthdim), FillValue, "upward_sea_water_velocity", prec="float")
     v4_def <- ncvar_def("err", velocity_units, list(timedim, depthdim), FillValue, "error_velocity", prec="float")
+  } else if (oceCoord == 'xyz') {
+    v1_def <- ncvar_def("u", velocity_units, list(timedim, depthdim), FillValue, "instrument_x_sea_water_velocity", prec="float")
+    v2_def <- ncvar_def("v", velocity_units, list(timedim, depthdim), FillValue, "instrument_y_sea_water_velocity", prec="float")
+    v3_def <- ncvar_def("w", velocity_units, list(timedim, depthdim), FillValue, "instrument_z_sea_water_velocity", prec="float")
+    v4_def <- ncvar_def("err", velocity_units, list(timedim, depthdim), FillValue, "error_velocity", prec="float")
   }
 
   vars <- append(vars, list(v1_def, v2_def, v3_def, v4_def))
@@ -124,6 +129,8 @@ adp_write <- function(adp, filePath, overwrite=FALSE){
       vv_def <- ncvar_def("vv", velocity_units, list(timedim, depthdim), FillValue, "along_beam_velocity", prec="float")
     } else if (oceCoord == 'enu') {
       vv_def <- ncvar_def("vv", velocity_units, list(timedim, depthdim), FillValue, "upward_sea_water_velocity", prec="float")
+    } else if (oceCoord == 'xyz') {
+      vv_def <- ncvar_def("vv", velocity_units, list(timedim, depthdim), FillValue, "instrument_z_sea_water_velocity", prec="float")
     }
       
     va_def <- ncvar_def("va", a_units, list(timedim, depthdim), FillValue, "echo_intensity", prec="float")
@@ -260,7 +267,7 @@ write_moored_ctd <- function(ctd, filePath, overwrite=FALSE) {
   #    filePath : The file path, which should include the .nc suffix.
   #
   if (!inherits(ctd, "ctd") & !inherits(ctd, "rsk")){
-    stop("Must be an object of class ctd")
+    stop("Must be an object of class ctd or rsk")
   }
 
   if (file.exists(filePath) & !overwrite) {
