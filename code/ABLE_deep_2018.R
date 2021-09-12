@@ -17,8 +17,12 @@ adp <- oceSetMetadata(adp, 'orientation', ori)
 # Subset data using pressure
 adp <- subset(adp, pressure > pmin)
 
+# Bin mapping because of extreme pitch/roll
+write("Starting bin-mapping", stdout())
+adpbm <- binmapAdp(adp)
+
 # Convert to xyz coordinates
-xyz <- beamToXyz(adp)
+xyz <- beamToXyz(adpbm)
 
 # Convert to Earth coordinates
 # The matlab file gives -18.7 for declination. 
@@ -26,4 +30,4 @@ xyz <- beamToXyz(adp)
 # gives a value of 19 or 19.3 depending on which standard you choose...
 enu <- xyzToEnu(xyz, declination = dec)
 
-enu_write(enu, "../proc/ABLE_deep_2018_enu.nc")
+enu_write(enu, "../proc/ABLE_deep_2018_enu.nc", overwrite=TRUE)
