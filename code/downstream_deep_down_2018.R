@@ -28,4 +28,4 @@ xyz <- beamToXyz(adp)
 # gives a value of 19 or 19.3 depending on which standard you choose...
 enu <- xyzToEnu(xyz, declination = dec)
 
-enu_write(enu, "../proc/downstream_deep_down_2018_enu.nc")
+adp_write(enu, "../proc/downstream_deep_down_2018_enu.nc", overwrite=TRUE)

@@ -42,4 +42,4 @@ enuv <- xyzToEnu(xyzv, declination = dec)
 # Put rotated 5th beam back into original object
 enu[["vv"]] <- enuv[["v"]][,,3]
 
-enu_write(enu, "../proc/ABLE_sentinel_2018_enu.nc")
+adp_write(enu, "../proc/ABLE_sentinel_2018_enu.nc", overwrite=TRUE)
