@@ -11,7 +11,7 @@ file <- path.expand(file)
 ctd <- read.ctd(file)
 ctd[['latitude']] <- lat
 ctd[['longitude']] <- lon
-write_moored_ctd(ctd, "../proc/ABLE_sentinel_RBRvirtuoso_2018.nc")
+write_moored_ctd(ctd, "../proc/ABLE_sentinel_RBRvirtuoso_2018.nc", overwrite=TRUE)
 
 # Microcat
 file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/ABLE_Sentinel/SBE/SBE37SM-RS232_03707818_2018_09_18.cnv"
@@ -19,4 +19,4 @@ file <- path.expand(file)
 ctd <- read.ctd(file)
 ctd[['latitude']] <- lat
 ctd[['longitude']] <- lon
-write_moored_ctd(ctd, "../proc/ABLE_sentinel_SBE37_2018.nc")
+write_moored_ctd(ctd, "../proc/ABLE_sentinel_SBE37_2018.nc", overwrite=TRUE)

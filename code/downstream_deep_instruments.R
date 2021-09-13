@@ -13,7 +13,7 @@ ctd <- read.ctd(file)
 ctd[['latitude']] <- lat
 ctd[['longitude']] <- lon
 summary(ctd)
-write_moored_ctd(ctd, "../proc/downstream_deep_SBE37_10551_2018.nc")
+write_moored_ctd(ctd, "../proc/downstream_deep_SBE37_10551_2018.nc", overwrite=TRUE)
 
 # Microcat 10552
 file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/SBE/SBE37SM-RS232_03710552_2018_09_18.cnv"
@@ -23,7 +23,7 @@ ctd <- read.ctd(file)
 ctd[['latitude']] <- lat
 ctd[['longitude']] <- lon
 summary(ctd)
-write_moored_ctd(ctd, "../proc/downstream_deep_SBE37_10552_2018.nc")
+write_moored_ctd(ctd, "../proc/downstream_deep_SBE37_10552_2018.nc", overwrite=TRUE)
 
 # Microcat 10553
 file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/SBE/SBE37SM-RS232_03710553_2018_09_18.cnv"
@@ -33,4 +33,4 @@ ctd <- read.ctd(file)
 ctd[['latitude']] <- lat
 ctd[['longitude']] <- lon
 summary(ctd)
-write_moored_ctd(ctd, "../proc/downstream_deep_SBE37_10553_2018.nc")
+write_moored_ctd(ctd, "../proc/downstream_deep_SBE37_10553_2018.nc", overwrite=TRUE)
