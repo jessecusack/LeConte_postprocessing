@@ -25,9 +25,9 @@ Lets take a small segment of data and save to netcdf for analysing with python.
 ```{r}
 # Parameters
 # Upward looking
-file <- '~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/15645000.000'
+# file <- '~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/15645000.000'
 # Downward looking
-# file <- '~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/SN_54000.000'
+file <- '~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/SN_54000.000'
 lat <- 56.83596667
 lon <- -132.3616833
 dec <- 19.32  # magnetic declination
@@ -42,10 +42,11 @@ adp <- read.adp(file, from = from, to = to, latitude = lat, longitude = lon, des
 adp <- oceSetMetadata(adp, 'orientation', ori)
 adp <- subset(adp, distance < dmax)
 enu <- xyzToEnu(beamToXyz(adp), declination = dec)
+```
 
-adp_write(adp, "raw.nc")
-enu_write(enu, "enu.nc")
-
+```{r}
+adp_write(adp, "raw.nc", TRUE)
+adp_write(enu, "enu.nc", TRUE)
 ```
 
 Plots of the R objects.
@@ -58,6 +59,28 @@ plot(enu, which=c(1, 3), zlim=rbind(c(-0.3, 0.3), c(-0.1, 0.1)), decimate=TRUE)
 plot(enu, which=c(5, 9), decimate=TRUE)
 ```
 
+Experiment with bin-mapping.
+
 ```{r}
-?"plot,adp-method"
+adpbm <- binmapAdp(adp)
+```
+
+```{r}
+enubm <- xyzToEnu(beamToXyz(adpbm), declination = dec)
+```
+
+```{r}
+plot(enu, which=3, zlim=c(-0.1, 0.1), decimate=TRUE)
+plot(enubm, which=3, zlim=c(-0.1, 0.1), decimate=TRUE)
+```
+
+```{r}
+diff <- enubm
+diff[['v']] <- enubm[['v']] -  enu[['v']]
+
+plot(diff, which=2)
+```
+
+```{r}
+
 ```

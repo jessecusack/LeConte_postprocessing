@@ -30,7 +30,7 @@ from scipy.ndimage import label, gaussian_filter
 
 # %%
 enu = xr.open_dataset("enu.nc", decode_times=False)
-enu["time"] = utils.POSIX_to_datetime(enu.time.values)
+enu["time"] = utils.POSIX_to_datetime(enu.time.values).astype(np.datetime64)
 
 # %%
 hvel_kwargs = dict(vmin=-0.3, vmax=0.3, cmap="coolwarm")
@@ -82,7 +82,7 @@ dthresh = 50.
 sidelobe_pct = 0.1  # Side lobe percentage
 var_names = ["a1", "a2", "a3", "a4"]
 
-dmingood = np.full_like(enu.time, 1e10)
+dmingood = np.full_like(enu.time, 1e10, dtype=float)
 
 for var in var_names:
 
@@ -362,7 +362,7 @@ import pytz
 import datetime
 
 # %%
-tslice = slice(datetime.datetime(2018, 9, 6, 4, 0, tzinfo=pytz.utc), datetime.datetime(2018, 9, 6, 6, 0, tzinfo=pytz.utc))
+tslice = slice(datetime.datetime(2018, 9, 7, 2, 0, tzinfo=pytz.utc), datetime.datetime(2018, 9, 7, 6, 0, tzinfo=pytz.utc))
 enueb_ = enueb.sel(time=tslice)
 enus_ = enus.sel(time=tslice)
 
