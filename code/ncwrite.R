@@ -163,18 +163,15 @@ adp_write <- function(adp, filePath, overwrite=FALSE){
 
   # Physical variables, if they exist
   if (is_temperature) {
-    dlname <- "sea_water_temperature"
-    t_def <- ncvar_def("t", temperature_units, list(timedim), FillValue, dlname, prec="float")
+    t_def <- ncvar_def("t", temperature_units, list(timedim), FillValue, "sea_water_temperature", prec="float")
     vars <- append(vars, list(t_def))
   }
   if (is_salinity) {
-    dlname <- "sea_water_practical_salinity"
-    SP_def <- ncvar_def("SP", salinity_units, list(timedim), FillValue, dlname, prec="float")
+    SP_def <- ncvar_def("SP", salinity_units, list(timedim), FillValue, "sea_water_practical_salinity", prec="float")
     vars <- append(vars, list(SP_def))
   }
   if (is_pressure) {
-    dlname <- "sea_water_pressure"
-    p_def <- ncvar_def("p", pressure_units, list(timedim), FillValue, dlname, prec="float")
+    p_def <- ncvar_def("p", pressure_units, list(timedim), FillValue, "sea_water_pressure", prec="float")
     vars <- append(vars, list(p_def))
   }
 
@@ -302,28 +299,23 @@ write_moored_ctd <- function(ctd, filePath, overwrite=FALSE) {
 
   # Physical variables, if they exist
   if (is_temperature) {
-    dlname <- "sea_water_temperature"
-    t_def <- ncvar_def("t", temperature_units, list(timedim), FillValue, dlname, prec="float")
+    t_def <- ncvar_def("t", temperature_units, list(timedim), FillValue, "sea_water_temperature", prec="float")
     vars <- append(vars, list(t_def))
   }
   if (is_salinity) {
-    dlname <- "sea_water_practical_salinity"
-    SP_def <- ncvar_def("SP", salinity_units, list(timedim), FillValue, dlname, prec="float")
+    SP_def <- ncvar_def("SP", salinity_units, list(timedim), FillValue, "sea_water_practical_salinity", prec="float")
     vars <- append(vars, list(SP_def))
   }
   if (is_pressure) {
-    dlname <- "sea_water_pressure"
-    p_def <- ncvar_def("p", pressure_units, list(timedim), FillValue, dlname, prec="float")
+    p_def <- ncvar_def("p", pressure_units, list(timedim), FillValue, "sea_water_pressure", prec="float")
     vars <- append(vars, list(p_def))
   }
   if (is_conductivity) {
-    dlname <- "conductivity"
-    C_def <- ncvar_def("C", conductivity_units, list(timedim), FillValue, dlname, prec="float")
+    C_def <- ncvar_def("C", conductivity_units, list(timedim), FillValue, "sea_water_electrical_conductivity", prec="float")
     vars <- append(vars, list(C_def))
   }
   if (is_turbidity) {
-    dlname <- "sea_water_turbidity"
-    turb_def <- ncvar_def("turb", turbidity_units, list(timedim), FillValue, dlname, prec="float")
+    turb_def <- ncvar_def("turb", turbidity_units, list(timedim), FillValue, "sea_water_turbidity", prec="float")
     vars <- append(vars, list(turb_def))
   }
 
