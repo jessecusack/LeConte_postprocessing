@@ -382,7 +382,7 @@ copy_metadata <- function(meta, ncout, namePrefix=""){
     }
 
     if (is.list(dat)) {  # Recursive copy of other metadata
-      write(paste("Stepping into:", name))
+      write(paste("Stepping into:", name), stdout())
       copy_metadata(dat, ncout, paste(namePrefix, name, sep=""))
       next
     }
