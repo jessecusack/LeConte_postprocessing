@@ -20,14 +20,16 @@ library(oce)
 source("../code/ncwrite.R")
 ```
 
+## Downstream mooring
+
 Lets take a small segment of data and save to netcdf for analysing with python.
 
 ```{r}
 # Parameters
 # Upward looking
-# file <- '~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/15645000.000'
+file <- '~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/15645000.000'
 # Downward looking
-file <- '~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/SN_54000.000'
+# file <- '~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/SN_54000.000'
 lat <- 56.83596667
 lon <- -132.3616833
 dec <- 19.32  # magnetic declination
@@ -79,6 +81,47 @@ diff <- enubm
 diff[['v']] <- enubm[['v']] -  enu[['v']]
 
 plot(diff, which=2)
+```
+
+## ABLE Deep mooring
+
+```{r}
+file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/ABLE_Deep/16670013.000"
+pmin <- 120.  # cut off pressure [dbar]
+lat <- 56.835592
+lon <- -132.3572915
+dec <- 19.32  # magnetic declination
+ori <- "upward"  # orientation
+from <- as.POSIXct("2018-09-16 00:00:00", tz="UTC")
+to <- as.POSIXct("2018-09-17 00:00:00", tz="UTC")
+despike <- FALSE
+
+adp <- read.adp(file, from = from, to = to, latitude = lat, longitude = lon, despike = despike)
+adp <- oceSetMetadata(adp, 'orientation', ori)
+```
+
+```{r}
+summary(adp)
+```
+
+```{r}
+?"plot,adp-method"
+```
+
+```{r}
+plot(adp, which=5:8)
+```
+
+```{r}
+plot(adp, which="heading")
+```
+
+```{r}
+ahigh <- adp[['a', 'numeric']][,,1] > 200
+```
+
+```{r}
+any(ahigh)
 ```
 
 ```{r}

@@ -68,7 +68,7 @@ enu.g4.plot(ax=axs[3])
 
 
 # %% [markdown]
-# ## Identify surface or bottom of ice
+# ## Identify surface or bottom
 
 # %%
 def mode(x, **kwargs):
@@ -226,7 +226,7 @@ mask = qgood & egood
 var_names = ["u", "v", "w", "err"]
 for var in var_names:
     enuc[var] = enus[var].where(mask)
-    
+
 
 # %%
 hvel_kwargs = dict(vmin=-0.3, vmax=0.3, cmap="coolwarm")
@@ -362,7 +362,7 @@ import pytz
 import datetime
 
 # %%
-tslice = slice(datetime.datetime(2018, 9, 7, 2, 0, tzinfo=pytz.utc), datetime.datetime(2018, 9, 7, 6, 0, tzinfo=pytz.utc))
+tslice = slice("2018-09-07T02:00:00", "2018-09-07T06:00:00")
 enueb_ = enueb.sel(time=tslice)
 enus_ = enus.sel(time=tslice)
 
@@ -379,5 +379,93 @@ enus_.pitch.plot(ax=ax)
 enus_.rol.plot(ax=ax)
 # enus_.heading.plot(ax=ax)
 ax.set_xlim(tslice.start, tslice.stop)
+
+# %%
+ctd = xr.open_dataset("../proc/downstream_deep_SBE37_10552_2018.nc")
+ctd["time"] = utils.POSIX_to_datetime(ctd.time.values).astype(np.datetime64)
+
+# %%
+cmap = "coolwarm"
+tslice = slice("2018-09-07T02:30:00", "2018-09-07T06:00:00")
+hvel_kwargs = dict(vmin=-0.2, vmax=0.2, cmap=cmap)
+vvel_kwargs = dict(vmin=-0.1, vmax=0.1, cmap=cmap)
+
+
+enueb_ = enueb.sel(time=tslice)
+enus_ = enus.sel(time=tslice)
+enu_ = enu.sel(time=tslice)
+ctd_ = ctd.sel(time=tslice)
+
+nrows = 5
+
+fig, all_axs = plt.subplots(nrows, 2, figsize=(8, 2*nrows), gridspec_kw=dict(width_ratios=[60, 1], wspace=0.1, hspace=0.05))
+axs = all_axs[:, 0]
+caxs = all_axs[:, 1]
+
+enueb_.u.plot(ax=axs[0], **hvel_kwargs, cbar_ax=caxs[0], cbar_kwargs=dict(label="u [m s$^{-1}$]"))
+enueb_.v.plot(ax=axs[1], **hvel_kwargs, cbar_ax=caxs[1], cbar_kwargs=dict(label="v [m s$^{-1}$]"))
+enueb_.w.plot(ax=axs[2], **vvel_kwargs, cbar_ax=caxs[2], cbar_kwargs=dict(label="w [m s$^{-1}$]"))
+
+# enueb_.w.plot.pcolormesh
+
+asum = enu_.a1 + enu_.a2 + enu_.a3 + enu_.a4
+
+asum.plot(ax=axs[3], cbar_ax=caxs[3], cbar_kwargs=dict(label="Echo intensity [dB]\n(sum of beams)"))
+
+
+ctd_.t.plot(ax=axs[4])
+axs[4].annotate(f"Mean microcat pressure = {ctd_.p.mean().values:1.1f} dbar", (0.02, 0.9), xycoords="axes fraction")
+axs[4].set_ylabel("Temperature [deg C]")
+
+for ax in axs[:-1]:
+    ax.set_xticklabels("")
+    ax.set_xlabel("")
+    ax.set_ylabel("Distance [m]\n(from ADCP)")
+    
+    
+for ax in axs:
+    ax.set_xlim(enu_.time[0].values, enu_.time[-1].values)
+
+caxs[-1].remove()
+
+fig.align_ylabels(axs)
+fig.align_ylabels(caxs)
+
+fig.savefig("iceberg_waves.jpg", dpi=180, bbox_inches="tight", pad_inches=0.1)
+
+# %%
+mask = (asum > 600) & (asum.distance > 40)
+dist = np.tile(asum.distance.values[:, np.newaxis], (1, asum.time.size))
+
+surfdists = dist[mask.values]
+
+bins = np.arange(40., 100., 4.)
+bin_mid = utils.mid(bins)
+n, _, _ = plt.hist(surfdists, bins=bins)
+
+# %%
+from scipy.signal import find_peaks
+
+# %%
+peaks, _ = find_peaks(n, distance=4)
+
+# %%
+bin_mid[peaks]
+
+# %%
+iceberg_depth = np.diff(bin_mid[peaks])
+print(f"Iceberg_depth = {iceberg_depth[0]} m")
+
+# %%
+import scipy.integrate as itgr
+
+# %%
+w = enueb_.w.sel(distance=20., method="nearest")
+
+disp = itgr.cumtrapz((w - w.rolling(time=2000, center=True, min_periods=100).median()).fillna(0.), enueb_.time.values.astype("datetime64[s]").astype(float), initial=0)
+
+fig, ax = plt.subplots()
+ax.plot(enueb_.time, disp)
+ax.set_ylabel("Displacement [m]")
 
 # %%

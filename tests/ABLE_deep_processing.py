@@ -51,15 +51,10 @@ def interval_to_mid(intervals):
 # %%
 ad = xr.open_dataset("../proc/ABLE_deep_2018_enu.nc")
 ad = ad.set_coords(["lon", "lat"])
-ad["time"] = utils.POSIX_to_datetime(ad.time.values)
+ad["time"] = utils.POSIX_to_datetime(ad.time.values).astype(np.datetime64)
 
 x, y, *_ = utm.from_latlon(ad.lat, ad.lon)
 ad = ad.assign_coords({"x": x, "y": y})
-
-# Conflicts with roll operation
-rol = ad["roll"]
-ad = ad.drop_vars("roll")
-ad["rol"] = (rol.dims, rol.values, rol.attrs)
 
 # sbe51 = xr.open_dataset("../proc/downstream_deep_SBE37_10551_2018.nc")
 # sbe51 = sbe51.set_coords(["lon", "lat"])
@@ -278,3 +273,90 @@ ax.set_ylabel("Pressure [dbar]")
 fig, ax = plt.subplots(figsize=(15, 5))
 ax.plot(adm.time, adm.pitch, '.')
 ax.set_ylabel("pitch [deg]")
+
+# %% [markdown]
+# # New QC
+
+# %%
+# These times are the 'depth stable period' (but not heading/pitch stable) slice(np.datetime64("2018-09-07T00:00"), np.datetime64("2018-09-13T12:00"))
+tslice = slice(np.datetime64("2018-09-04T10:00"), np.datetime64("2018-09-04T11:00"))
+# tslice = slice(np.datetime64("2018-09-07T10:00"), np.datetime64("2018-09-07T11:00"))
+enu = adp.sel(time=tslice)  
+
+# %%
+hvel_kwargs = dict(vmin=-0.3, vmax=0.3, cmap="coolwarm")
+vvel_kwargs = dict(vmin=-0.1, vmax=0.1, cmap="coolwarm")
+
+fig, axs = plt.subplots(4, 1, sharex=True, figsize=(22, 14))
+enu.u.plot(ax=axs[0], **hvel_kwargs)
+enu.v.plot(ax=axs[1], **hvel_kwargs)
+enu.w.plot(ax=axs[2], **vvel_kwargs)
+np.abs(enu.err).plot(ax=axs[3], vmin=0, vmax=0.2)
+
+for ax in axs:
+    ax.set_xlabel("")
+
+# %%
+# nroll = 7
+dthresh = 100.
+sidelobe_pct = 0.075  # Side lobe percentage
+var_names = ["a1", "a2", "a3", "a4"]
+
+dmingood = np.full_like(enu.time, 1e10, dtype=float)
+
+for var in var_names:
+
+    idxmax = enu[var].where(enu.distance > dthresh).argmax("distance")
+    dmax = enu.distance[idxmax]
+    dsl = (1 - sidelobe_pct)*enu.distance[idxmax]
+    # dmax = dmax.where(dmax > dthresh)
+    # dmode = dmax.rolling(time=nroll, min_periods=1, center=True).reduce(mode)
+    
+    dmingood = np.minimum(dmingood, dsl.values)
+    
+    
+for var in var_names:
+
+    idxmax = enu[var].where(enu.distance > dthresh).argmax("distance")
+    dmax = enu.distance[idxmax]
+    dsl = (1 - sidelobe_pct)*enu.distance[idxmax]
+
+    fig, ax = plt.subplots(figsize=(22, 4))
+    enu[var].plot(ax=ax)
+    dsl.plot(ax=ax, color="k")
+    dmax.plot(ax=ax, color="k", linestyle="--")
+    ax.plot(enu.time, dmingood, "r")
+
+# %%
+enu.heading.plot(figsize=(18, 3))
+
+# %%
+fig, ax = plt.subplots(figsize=(18, 3))
+enu.pitch.plot(ax=ax, label="pitch")
+enu.rol.plot(ax=ax, label="roll")
+ax.legend()
+
+# %%
+adp.pitch.plot(figsize=(22, 3))
+
+# %% [markdown]
+# # Beam separation
+
+# %%
+z = adp.distance[adp.distance < 160]
+angle = np.deg2rad(adp.beamAngle)
+
+separation_opposite = 2*z*np.tan(angle)
+separation_adjacent = 2*z*np.tan(angle)*np.cos(np.pi/4)
+
+fig, ax = plt.subplots()
+ax.plot(separation_opposite, z, label="opposite")
+ax.plot(separation_adjacent, z, label="adjacent")
+ax.axvline(75, color="k", label="half wavelength")
+ax.legend()
+ax.grid()
+
+ax.set_xlabel("Beam separation [m]")
+ax.set_ylabel("Distance from ADCP (mast) [m]")
+
+# %%
