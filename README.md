@@ -107,15 +107,21 @@ install.packages("remote")
 remotes::install_github("dankelley/oce", ref="develop")
 ```
 
-In order to install the development branch successfully I had to install gfortran using the [downloadable dmg](https://github.com/fxcoudert/gfortran-for-macOS/releases), rather than the version that comes with `brew install gcc`.
+The above requires a fortran compiler such as `gfortran`. If you get an error, it could be because R doesn't know where to find the fortran compiler. I followed [these instructions](https://www.cynkra.com/blog/2021-03-16-gfortran-macos/) to fix the error. In summary, first install `gcc` using homebrew. Then create a file `~/.R/Makevars` and insert the following lines,
 
-The R code I have written also requires the following
+```
+FC = /opt/homebrew/Cellar/gcc/[version]/bin/gfortran
+F77 = /opt/homebrew/Cellar/gcc/[version]/bin/gfortran
+FLIBS = -L/opt/homebrew/Cellar/gcc/[version]/lib
+```
+
+replacing `[version]` with the actual directory name (in my case it was `11.2.0_3`). If you update `gcc` this fix may no longer work and you'll have to update `Makevars` appropriately. 
+
+My scripts also require:
 
 ```
 install.packages("ncdf4")
 install.packages("RSQLite")  # For loading rsk files
-install.packages("yaml")
-install.packages("numDeriv")  # Numerical derivatives
 ```
 
 With all the above installed, it should be possible to run the processing scripts from the terminal, e.g.:
