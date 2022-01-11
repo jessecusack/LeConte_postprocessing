@@ -1,0 +1,128 @@
+---
+jupyter:
+  jupytext:
+    formats: ipynb,Rmd
+    notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+  kernelspec:
+    display_name: R
+    language: R
+    name: ir
+---
+
+Load and save a chunk of data for QC purposes
+
+```{r}
+library(oce)
+source("../code/ncwrite.R")
+```
+
+## Deep long-term mooring
+
+```{r}
+# Parameters
+# Upward looking
+file <- '~/Dropbox/LeConte/Data/ocean/may2017/moorings/deep/processed/ADCP/data_mat/SN15645.000'
+# file <- '~/Dropbox/LeConte/Data/ocean/september2017/moorings/deep/raw/300\ khz/LC300000.000'
+# Downward looking
+# file <- '~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/SN_54000.000'
+lat <- 56.8265
+lon <- -132.3767
+dec <- 19.32  # magnetic declination
+# from <- as.POSIXct("2018-09-05 08:00:00", tz="UTC")
+# to <- as.POSIXct("2018-09-07 08:00:00", tz="UTC")
+despike <- FALSE
+ori <- "upward"
+dmax <- 1000
+
+# Read and minimal processing
+adp <- read.adp(file, latitude = lat, longitude = lon, despike = despike) # from = from, to = to,
+adp <- oceSetMetadata(adp, 'orientation', ori)
+adp <- subset(adp, distance < dmax)
+enu <- xyzToEnu(beamToXyz(adp), declination = dec)
+```
+
+```{r}
+adp_write(adp, "raw.nc", TRUE)
+adp_write(enu, "enu.nc", TRUE)
+```
+
+Plots of the R objects.
+
+```{r}
+plot(enu, which=c(1, 3), zlim=rbind(c(-0.3, 0.3), c(-0.1, 0.1)), decimate=TRUE)
+```
+
+```{r}
+plot(enu, which=c(5, 9), decimate=TRUE)
+```
+
+Experiment with bin-mapping.
+
+```{r}
+adpbm <- binmapAdp(adp)
+```
+
+```{r}
+enubm <- xyzToEnu(beamToXyz(adpbm), declination = dec)
+```
+
+```{r}
+plot(enu, which=3, zlim=c(-0.1, 0.1), decimate=TRUE)
+plot(enubm, which=3, zlim=c(-0.1, 0.1), decimate=TRUE)
+```
+
+```{r}
+diff <- enubm
+diff[['v']] <- enubm[['v']] -  enu[['v']]
+
+plot(diff, which=2)
+```
+
+## ABLE Deep mooring
+
+```{r}
+file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/ABLE_Deep/16670013.000"
+pmin <- 120.  # cut off pressure [dbar]
+lat <- 56.835592
+lon <- -132.3572915
+dec <- 19.32  # magnetic declination
+ori <- "upward"  # orientation
+from <- as.POSIXct("2018-09-16 00:00:00", tz="UTC")
+to <- as.POSIXct("2018-09-17 00:00:00", tz="UTC")
+despike <- FALSE
+
+adp <- read.adp(file, from = from, to = to, latitude = lat, longitude = lon, despike = despike)
+adp <- oceSetMetadata(adp, 'orientation', ori)
+```
+
+```{r}
+summary(adp)
+```
+
+```{r}
+?"plot,adp-method"
+```
+
+```{r}
+plot(adp, which=5:8)
+```
+
+```{r}
+plot(adp, which="heading")
+```
+
+```{r}
+ahigh <- adp[['a', 'numeric']][,,1] > 200
+```
+
+```{r}
+any(ahigh)
+```
+
+```{r}
+
+```
