@@ -15,6 +15,7 @@ dependencies:
 - h5py
 - pyyaml
 - utm
+- ipykernel
 - pip:
     - mixsea
     - mat73==0.41

@@ -25,3 +25,4 @@ dependencies:
 - pip:
     - mixsea
     - mat73==0.41
+    - dolfyn
