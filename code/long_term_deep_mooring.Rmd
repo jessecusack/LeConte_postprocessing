@@ -1,0 +1,271 @@
+---
+jupyter:
+  jupytext:
+    formats: ipynb,Rmd
+    notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+  kernelspec:
+    display_name: R
+    language: R
+    name: ir
+---
+
+```{r}
+# Load libraries
+library(oce)
+source("ncwrite.R")
+```
+
+# Parameters
+
+```{r}
+lat <- 56.8265
+lon <- -132.3767
+dec <- 19.32  # magnetic declination
+despike <- FALSE
+ori <- "upward"
+dmax <- 1000
+
+file1 <- '~/Dropbox/LeConte/Data/ocean/august2016/Moorings/deep mooring/raw/300khz/raw/LC300003.000'
+file2 <-'~/Dropbox/LeConte/Data/ocean/may2017/moorings/deep/processed/ADCP/data_mat/SN15645.000'
+file3 <- '~/Dropbox/LeConte/Data/ocean/september2017/moorings/deep/raw/300 khz/LC300000.000'
+```
+
+# Period 1
+## ADP
+### Check
+
+```{r}
+adp <- read.adp(file1, latitude = lat, longitude = lon, despike = despike)
+```
+
+```{r}
+summary(adp)
+```
+
+Only need to find start because the end is battery dead in water/
+
+```{r}
+i0 <- 200
+i1 <- 300
+plot(adp[['time']], adp[['temperature']])
+plot(adp[['time']][i0:i1], adp[['pitch']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['roll']][i0:i1])
+```
+
+### Save
+
+```{r}
+# Read and minimal processing
+from <- as.POSIXct("2016-03-29 19:30:00", tz="UTC")
+to <- as.POSIXct("2020-01-01 00:00:00", tz="UTC")
+adp <- read.adp(file1, latitude = lat, longitude = lon, despike = despike, from = from, to = to)
+adp <- oceSetMetadata(adp, 'orientation', ori)
+adp <- subset(adp, distance < dmax)
+enu <- xyzToEnu(beamToXyz(adp), declination = dec)
+adp_write(enu, "../proc/long_term_moorings/long_term_deep_1_enu.nc", overwrite=TRUE)
+```
+
+## CTD
+
+
+### CTD 1
+
+CTD just below ADP (I think)
+
+```{r}
+file <- "~/Dropbox/LeConte/Data/ocean/august2016/Moorings/deep\ mooring/raw/7819/SBE37SM-RS232_03707819_2016_08_12.cnv"
+file <- path.expand(file)
+ctd <- read.ctd(file, from = from, to = to)
+ctd[['latitude']] <- lat
+ctd[['longitude']] <- lon
+write_moored_ctd(ctd, "../proc/long_term_moorings/long_term_deep_1_SBE37_7819.nc", overwrite=TRUE)
+```
+
+```{r}
+summary(ctd)
+```
+
+```{r}
+plot(ctd[['time']], ctd[['temperature']])
+plot(ctd[['time']], ctd[['pressure']])
+```
+
+### CTD 2
+
+```{r}
+file <- "~/Dropbox/LeConte/Data/ocean/august2016/Moorings/deep\ mooring/raw/7664/SBE37SM-RS232_03707664_2016_08_12.cnv"
+file <- path.expand(file)
+ctd <- read.ctd(file)
+ctd[['latitude']] <- lat
+ctd[['longitude']] <- lon
+```
+
+```{r}
+summary(ctd)
+```
+
+```{r}
+plot(ctd[['time']], ctd[['temperature']])
+plot(ctd[['time']], ctd[['pressure']])
+```
+
+### CTD 3
+
+```{r}
+file <- "~/Dropbox/LeConte/Data/ocean/august2016/Moorings/deep\ mooring/raw/8178/SBE37SM-RS232_03708178_2016_08_12.cnv"
+file <- path.expand(file)
+ctd <- read.ctd(file)
+ctd[['latitude']] <- lat
+ctd[['longitude']] <- lon
+```
+
+```{r}
+summary(ctd)
+```
+
+```{r}
+plot(ctd[['time']], ctd[['temperature']])
+plot(ctd[['time']], ctd[['pressure']])
+```
+
+# Period 2
+## ADP
+### Check
+
+```{r}
+adp <- read.adp(file2, latitude = lat, longitude = lon, despike = despike)
+```
+
+```{r}
+summary(adp)
+```
+
+Start
+
+```{r}
+i0 <- 200
+i1 <- 500
+plot(adp[['time']], adp[['temperature']])
+plot(adp[['time']][i0:i1], adp[['pitch']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['roll']][i0:i1])
+```
+
+End
+
+```{r}
+i0 <- 577540 - 2700
+i1 <- 577540 - 2560
+plot(adp[['time']][i0:i1], adp[['temperature']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['pitch']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['roll']][i0:i1])
+```
+
+### Save
+
+```{r}
+# Read and minimal processing
+from <- as.POSIXct("2016-08-14 22:30:00", tz="UTC")
+to <- as.POSIXct("2017-05-07 23:03:00", tz="UTC")
+adp <- read.adp(file2, latitude = lat, longitude = lon, despike = despike, from = from, to = to)
+adp <- oceSetMetadata(adp, 'orientation', ori)
+adp <- subset(adp, distance < dmax)
+enu <- xyzToEnu(beamToXyz(adp), declination = dec)
+adp_write(enu, "../proc/long_term_moorings/long_term_deep_2_enu.nc", overwrite=TRUE)
+```
+
+## CTD
+
+
+### CTD 1
+
+CTD somewhere...
+
+```{r}
+# file <- "~/Dropbox/LeConte/Data/ocean/may2017/moorings/deep/raw/8178/SBE37SM-RS232_03708178_2017_05_09.cnv"
+
+pmin <- 80
+
+file <- "~/Dropbox/LeConte/Data/ocean/may2017/moorings/deep/raw/7819/SBE37SM-RS232_03707819_2017_05_08.cnv"
+file <- path.expand(file)
+ctd <- read.ctd.sbe(file, from = from, to = to)
+ctd[['latitude']] <- lat
+ctd[['longitude']] <- lon
+ctd <- subset(ctd, pressure > pmin)
+write_moored_ctd(ctd, "../proc/long_term_moorings/long_term_deep_2_SBE37_7819.nc", overwrite=TRUE)
+```
+
+```{r}
+summary(ctd)
+```
+
+```{r}
+plot(ctd[['time']], ctd[['temperature']])
+plot(ctd[['time']], ctd[['pressure']])
+```
+
+# Period 3
+## ADP
+### Check
+
+```{r}
+adp <- read.adp(file3, latitude = lat, longitude = lon, despike = despike)
+```
+
+```{r}
+summary(adp)
+```
+
+Start
+
+```{r}
+i0 <- 1890
+i1 <- 2000
+print(adp[['time']][i0])
+plot(adp[['time']][i0:i1], adp[['temperature']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['pitch']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['roll']][i0:i1])
+
+```
+
+End
+
+```{r}
+i0 <- 379516 - 3500
+i1 <- 379516 - 3122
+print(adp[['time']][i1])
+plot(adp[['time']][i0:i1], adp[['temperature']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['pitch']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['roll']][i0:i1])
+```
+
+### Save
+
+```{r}
+# Read and minimal processing
+from <- as.POSIXct("2017-05-09 21:47:00", tz="UTC")
+to <- as.POSIXct("2017-09-16 22:37:45", tz="UTC")
+adp <- read.adp(file3, latitude = lat, longitude = lon, despike = despike, from = from, to = to)
+adp <- oceSetMetadata(adp, 'orientation', ori)
+adp <- subset(adp, distance < dmax)
+enu <- xyzToEnu(beamToXyz(adp), declination = dec)
+adp_write(enu, "../proc/long_term_moorings/long_term_deep_3_enu.nc", overwrite=TRUE)
+```
+
+## CTD
+### CTD 1
+
+```{r}
+file <- "~/Dropbox/LeConte/Data/ocean/september2017/moorings/deep/raw/7819/SBE37SM-RS232_03707819_2017_09_18.asc"
+file <- path.expand(file)
+ctd <- read.ctd.sbe(file, from = from, to = to)
+ctd[['latitude']] <- lat
+ctd[['longitude']] <- lon
+```
+
+```{r}
+
+```
