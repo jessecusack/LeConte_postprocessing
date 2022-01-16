@@ -18,21 +18,96 @@ import xarray as xr
 import utils
 import numpy as np
 import matplotlib.pyplot as plt
+import utm
+import gsw
+
+# %% [markdown]
+# # Period 1
+#
+# ## Combine ADP and pressure
+#
+# SBE37: 7891 was located 2.5 m below the ADP
 
 # %%
-ds = xr.open_dataset("enu.nc")
-ds = ds.set_coords(["lon", "lat"])
-ds["time"] = utils.POSIX_to_datetime(ds.time.values).astype(np.datetime64)
+a1 = xr.open_dataset("../proc/long_term_deep_1_enu.nc")
+a1 = a1.set_coords(["lon", "lat"])
+a1["time"] = utils.POSIX_to_datetime(a1.time.values).astype(np.datetime64)
+
+x, y, *_ = utm.from_latlon(a1.lat, a1.lon)
+a1 = a1.assign_coords({"x": x, "y": y})
+
+c1 = xr.open_dataset("../proc/long_term_deep_1_SBE37_7819.nc")
+c1["time"] = utils.POSIX_to_datetime(c1.time.values).astype(np.datetime64)
+
+# %% [markdown]
+# Apply thermodynamics.
 
 # %%
-ds
+c1["SA"] = (c1.p.dims, gsw.SA_from_SP(c1.SP, c1.p, c1.lon, c1.lat).data, {"units": "g/kg", "long_name": "Absolute_salinity"})
+c1["CT"] = (c1.p.dims, gsw.CT_from_t(c1.SA, c1.t, c1.p).data, {"units": "deg C", "long_name": "Conservative_temperature"})
+c1["z"] = (c1.p.dims, gsw.z_from_p(c1.p, c1.lat).data, {"units": "m", "long_name": "height"})
+c1["depth"] = (c1.p.dims, -c1.z.data, {"units": "m", "long_name": "depth"})
+c1 = c1.set_coords(["z", "depth"])
 
 # %%
-ds.time.plot()
+c1.p.plot()
+
+# %% [markdown]
+# Estimate ADP depth (2.5 m above CTD)
 
 # %%
-tslice = slice("2017-02-20T04:00", "2017-02-20T12:00")
-ds = ds.sel(distance=slice(0, 93))
+a1["depth"] = (["time"], (c1.depth - 2.5).interp(dict(time=a1.time)).data, {"units": "m", "long_name": "depth"})
+a1["z"] = (["time"], -a1.depth.data, {"units": "m", "long_name": "height"})
+a1 = a1.set_coords(["depth", "z"])
+
+# %%
+a1
+
+# %%
+sidelobe = 1 - np.cos(np.deg2rad(a1.beamAngle))
+
+a1_ = a1.isel(time=slice(0, 50000))
+
+fig, ax = plt.subplots()
+a1_.a1.plot(ax=ax)
+a1_.depth.plot(ax=ax)
+((1 - sidelobe)*a1_.depth).plot(ax=ax)
+ax.set_ylabel("Distance [m]")
+ax.set_xlabel("")
+
+# %% [markdown]
+# Mask above surface
+
+# %%
+a1s = a1.copy()
+
+mask = a1.distance < (1 - sidelobe)*a1.depth
+
+for var in a1.data_vars:
+    if a1[var].dims == ('distance', 'time'):
+        print(f"Masking {var}.")
+        a1s[var] = a1[var].where(mask)
+
+# Remove distances where there is no good data
+a1s = a1s.isel(distance=mask.any("time"))
+
+# %%
+a1s.g3.plot()
+
+
+# %%
+a1s.u.isel(time=slice(300000, 310000)).plot(vmin=-0.10, vmax=0.10, cmap="RdBu_r")
+
+# %%
+a1s.u.isel(time=slice(300000, 310000)).mean("time").plot()
+a1s.v.isel(time=slice(300000, 310000)).mean("time").plot()
+
+# %% [markdown]
+# # Old stuff
+
+# %%
+# tslice = slice("2017-02-20T04:00", "2017-02-20T12:00")
+# ds = ds.sel(distance=slice(0, 93))
 
 # %%
 fig, axs = plt.subplots(3, 1, sharex=True, sharey=True, figsize=(20, 12))
