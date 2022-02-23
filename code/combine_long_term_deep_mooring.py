@@ -128,8 +128,8 @@ for i, (adp, ctd) in enumerate(zip(adps, ctds)):
     # Masking of bad data inc. surface, high speed, bins with low data fraction
     a1s = a1.copy()
 
-    mask = a1.distance < (1 - fside * sidelobe) * a1.depth  # Mask sidelobes
-    mask = mask.data
+    mask = a1.distance < (1 - fside * sidelobe) * a1.depth.mean("time")  # Mask sidelobes using mean depth
+    mask = np.tile(mask.data[:, np.newaxis], (1, len(a1.time)))
     spd = np.sqrt(a1.u ** 2 + a1.v ** 2 + a1.w ** 2)
     mask[(spd > spdmax).data] = False  # Mask high speeds
 
@@ -142,6 +142,9 @@ for i, (adp, ctd) in enumerate(zip(adps, ctds)):
 
     # Remove distances where there is no good data
     a1s = a1s.isel(distance=fdata > fdatamin)  # 1 is the time axis
+    
+    # Calculate median time step
+    a1s.attrs["time_step"] = np.median(np.diff(a1s.time).astype("timedelta64[s]")).astype(float)
 
     # Save cleaned dataset
     save_name = f"long_term_deep_{i+1}_combo.nc"
