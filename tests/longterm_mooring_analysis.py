@@ -223,7 +223,24 @@ c1 = c1.assign_coords(dict(lon=lon, lat=lat))
 # c1.to_netcdf("../proc/long_term_moorings/long_term_deep_3_SBE37_7819.nc")
 
 # %%
-c1.SP.plot()
+c1.time[0]
+
+# %%
+c1.time[-1]
+
+# %%
+a1 = xr.open_dataset("../proc/long_term_moorings/long_term_deep_3_enu.nc")
+a1 = a1.set_coords(["lon", "lat"])
+a1["time"] = utils.POSIX_to_datetime(a1.time.values).astype(np.datetime64)
+
+x, y, *_ = utm.from_latlon(a1.lat, a1.lon)
+a1 = a1.assign_coords({"x": x, "y": y})
+
+# %%
+a1.time[0]
+
+# %%
+a1.time[-1]
 
 # %% [markdown]
 # # Look at data
