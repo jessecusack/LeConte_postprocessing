@@ -17,9 +17,12 @@ adp <- oceSetMetadata(adp, 'orientation', ori)
 # Subset data using pressure
 adp <- subset(adp, pressure > pmin)
 
+adp_write(adp, "../proc/ABLE_deep_2018_beam.nc", overwrite=TRUE)
+
 # Bin mapping because of extreme pitch/roll
 write("Starting bin-mapping", stdout())
 adpbm <- binmapAdp(adp)
+adp_write(adpbm, "../proc/ABLE_deep_2018_beam_mapped.nc", overwrite=TRUE)
 
 # Convert to xyz coordinates
 xyz <- beamToXyz(adpbm)
