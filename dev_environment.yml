@@ -23,6 +23,7 @@ dependencies:
 - pylint
 - utm
 - nc-time-axis
+- sympy
 - pip:
     - mixsea
     - mat73==0.41
