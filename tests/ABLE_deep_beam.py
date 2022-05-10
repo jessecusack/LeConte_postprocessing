@@ -19,6 +19,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import utils
 
+def interval_to_mid(intervals):
+    """
+    Parameters
+    ----------
+        intervals : 1D numpy array
+            An array of pandas Interval objects.
+    Returns
+    -------
+        mids : 1D numpy array
+            Midpoints of the intervals.
+    """
+    return np.array([v.mid for v in intervals])
+
+
 # %%
 dsb = xr.open_dataset("../proc/ABLE_deep_2018_beam.nc")
 dsb["time"] = (utils.POSIX_to_datetime(dsb.time.values).astype(np.datetime64))
@@ -135,7 +149,7 @@ ds_.rol.plot(ax=axs[14], marker=".", linestyle="")
 # # Compare bin mapped velocities
 
 # %%
-var = "v4"
+var = "v1"
 
 uvkwargs = dict(vmin=-0.1, vmax=0.1, cmap="RdBu_r")
 
@@ -204,7 +218,7 @@ ax.legend()
 ax.set_ylim(70, 200)
 
 # %% [markdown]
-# Where are the beams pointing?
+# # Where are the beams pointing?
 #
 # We need to convert from instrument pitch/roll/heading to spherical polar coordinates and then into cartesian coordinates for plotting.
 
@@ -272,7 +286,7 @@ dlat = 0.005
 
 bathy = xr.open_dataset("../proc/bathy_sep_2018.nc")
 bathy_ = bathy.sel(lon=slice(dsm.lon.data - dlon, dsm.lon.data + dlon/4), lat=slice(dsm.lat.data - dlat, dsm.lat.data + dlat))
-                                                    
+
 
 # %%
 fig, ax = plt.subplots(1, 1, figsize=(20, 20))
@@ -313,5 +327,55 @@ ax.set_zlabel("z")
 ax.plot_surface(bathy_.x, bathy_.y, -bathy_.H)
 
 ax.view_init(40, 200)
+
+# %% [markdown]
+# # How big of a problem is ice return?
+
+# %%
+# For ease of plotting, first reduce data into 30 s bins
+dt = 30
+tstart = (dsm.time[0].values + np.timedelta64(30, 's')).astype('datetime64[m]')
+tend = dsm.time[-1].values.astype('datetime64[m]')
+timebins = np.arange(tstart, tend, np.timedelta64(dt, 's'))
+
+a1a = dsm.a1.groupby_bins("time", timebins).mean()
+a1a["time_bins"] = interval_to_mid(a1a.time_bins.values).astype("datetime64[s]")
+a1a = a1a.rename({"time_bins": "time"})
+
+a2a = dsm.a2.groupby_bins("time", timebins).mean()
+a2a["time_bins"] = interval_to_mid(a2a.time_bins.values).astype("datetime64[s]")
+a2a = a2a.rename({"time_bins": "time"})
+
+a3a = dsm.a3.groupby_bins("time", timebins).mean()
+a3a["time_bins"] = interval_to_mid(a3a.time_bins.values).astype("datetime64[s]")
+a3a = a3a.rename({"time_bins": "time"})
+
+a4a = dsm.a4.groupby_bins("time", timebins).mean()
+a4a["time_bins"] = interval_to_mid(a4a.time_bins.values).astype("datetime64[s]")
+a4a = a4a.rename({"time_bins": "time"})
+
+# %%
+import seawater as sw
+
+# %%
+# Estimate depth
+
+dt = 3600
+tstart = (dsm.time[0].values + np.timedelta64(30, 's')).astype('datetime64[m]')
+tend = dsm.time[-1].values.astype('datetime64[m]')
+timebins = np.arange(tstart, tend, np.timedelta64(dt, 's'))
+
+pa = dsm.p.groupby_bins("time", timebins).mean()
+pa["time_bins"] = interval_to_mid(pa.time_bins.values).astype("datetime64[s]")
+pa = pa.rename({"time_bins": "time"})
+
+pars = pa.interp(time=a1a.time)
+depth = sw.dpth(pars, dsm.lat)
+
+# %%
+fig, ax = plt.subplots(figsize=(18, 5))
+a3a.plot(ax=ax)
+ax.plot(pars.time, depth, lw=4, color="r")
+ax.plot(pars.time, 0.9*depth, lw=4, color="r")
 
 # %%
