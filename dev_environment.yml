@@ -24,6 +24,7 @@ dependencies:
 - utm
 - nc-time-axis
 - sympy
+- seawater
 - pip:
     - mixsea
     - mat73==0.41
