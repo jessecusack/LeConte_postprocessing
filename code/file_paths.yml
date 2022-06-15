@@ -55,3 +55,9 @@ bathymetry:
     aug2016:
         path: "Data/bathy/combinedbathy/bathy_2016aug_4m.mat"
         root: "leconte"
+        
+        
+runoff:
+    sep2018:
+        path: "Data/glacier/mb_model/runoff_extended_2018.mat"
+        root: "leconte"
