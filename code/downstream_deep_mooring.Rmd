@@ -272,7 +272,7 @@ Also see diagram in jpg files starting with downstream_
    |-------------+---------+----------+--------|
    | Type        | Pos (m) | Ref. Pt. | Serial |
    |-------------+---------+----------+--------|
-   | Microcat    |      48 |          |  10552 |
+   | SBE37SM     |      48 |          |  10552 |
    | RBR Solo    |      45 |        1 | 100028 |
    | RBR Solo    |      40 |        1 | 100027 |
    | RBR Solo    |      30 |        1 | 100024 |
@@ -281,7 +281,7 @@ Also see diagram in jpg files starting with downstream_
    | RBR Solo    |       5 |        1 | 100021 |
    |-------------+---------+----------+--------|
    | ADCP (up)   |         |          |  15645 |
-   | Microcat    |         |          |  10551 |
+   | SBE37SM     |         |          |  10551 |
    | ADCP (down) |         |          |     54 |
    | RBR Solo    |         |          | 100320 |
    |-------------+---------+----------+--------|
@@ -289,14 +289,14 @@ Also see diagram in jpg files starting with downstream_
    | RBR Solo    |      60 |        2 | 101191 |
    | RBR Solo    |      50 |        2 | 101193 |
    | RBR Solo    |      40 |        2 | 101194 |
-   | Microcat    |         |          |  07819 |
+   | SBE37SM     |         |          |  07819 |
    | RBR Solo    |      30 |        2 | 101190 |
    | RBR Solo    |      20 |        2 | 101197 |
    | RBR Solo    |      10 |        2 | 101196 |
    | RBR Solo    |       5 |        2 | 101192 |
    | RBR Solo    |       1 |        2 | 101195 |
    |-------------+---------+----------+--------|
-   | Microcat    |       0 |          |  10553 |
+   | SBE37SM     |       0 |          |  10553 |
    | RBR Solo    |         |          | 101180 |
    |-------------+---------+----------+--------|
 
