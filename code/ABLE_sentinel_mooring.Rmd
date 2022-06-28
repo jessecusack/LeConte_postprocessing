@@ -201,8 +201,6 @@ write_moored_rsk(rsk, file.path(save_dir, save_name), overwrite=TRUE)
 # Copy additional metadata
 
 ```{r}
-# Metadata
-file.copy(path.expand("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/recovery_notes.txt"), save_dir)
 # Diagrams
 file.copy(path.expand("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/mooring_diagrams/ABLE_S.jpg"), save_dir)
 ```
