@@ -254,3 +254,81 @@ file.copy(path.expand("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/r
 # Diagrams
 file.copy(Sys.glob("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/mooring_diagrams/downstream*.jpg"), save_dir)
 ```
+
+```{r}
+txt <- "# Downstream deep mooring
+
+## Instrument layout
+
+Also see diagram in jpg files starting with downstream_
+
+   |-----------------+--------------------|
+   | Reference Point | Description        |
+   |-----------------+--------------------|
+   |               1 | Bottom of 50m line |
+   |               2 | Bottom of 78m line |
+   |-----------------+--------------------|
+
+   |-------------+---------+----------+--------|
+   | Type        | Pos (m) | Ref. Pt. | Serial |
+   |-------------+---------+----------+--------|
+   | Microcat    |      48 |          |  10552 |
+   | RBR Solo    |      45 |        1 | 100028 |
+   | RBR Solo    |      40 |        1 | 100027 |
+   | RBR Solo    |      30 |        1 | 100024 |
+   | RBR Solo    |      20 |        1 | 100022 |
+   | RBR Solo    |      10 |        1 | 100020 |
+   | RBR Solo    |       5 |        1 | 100021 |
+   |-------------+---------+----------+--------|
+   | ADCP (up)   |         |          |  15645 |
+   | Microcat    |         |          |  10551 |
+   | ADCP (down) |         |          |     54 |
+   | RBR Solo    |         |          | 100320 |
+   |-------------+---------+----------+--------|
+   | RBR Solo    |      70 |        2 | 101189 |
+   | RBR Solo    |      60 |        2 | 101191 |
+   | RBR Solo    |      50 |        2 | 101193 |
+   | RBR Solo    |      40 |        2 | 101194 |
+   | Microcat    |         |          |  07819 |
+   | RBR Solo    |      30 |        2 | 101190 |
+   | RBR Solo    |      20 |        2 | 101197 |
+   | RBR Solo    |      10 |        2 | 101196 |
+   | RBR Solo    |       5 |        2 | 101192 |
+   | RBR Solo    |       1 |        2 | 101195 |
+   |-------------+---------+----------+--------|
+   | Microcat    |       0 |          |  10553 |
+   | RBR Solo    |         |          | 101180 |
+   |-------------+---------+----------+--------|
+
+# Notes
+## ADCP 54
+   - At 2018-09-17 15:59:20, ADCP clock read 2018-09-17 15:59:34
+## ADCP 15645
+   - At 2018-09-17 00:53:15 ADCP clock read 2018-09-17 00:52:58
+## RBR Solos
+   - 100022: At 2018-09-18 00:55:13 solo clock read 00:55:11
+   - 100020: At 2018-09-18 01:07:08 solo clock read 01:07:06
+   - 100028: At 2018-09-18 01:10:17 solo clock read 01:10:17
+   - 100027: At 2018-09-18 01:25:47 solo clock read 01:25:46
+   - 100021: At 2018-09-18 01:28:38 solo clock read 01:28:37
+   - 101193: At 2018-09-18 01:31:18 solo clock read 01:31:18
+   - 101197: At 2018-09-18 01:36:49 solo clock read 01:36:50
+   - 100024: At 2018-09-18 01:39:10 solo clock read 01:39:12
+   - 101196: At 2018-09-18 01:41:58 solo clock read 01:41:57
+   - 101194: At 2018-09-18 01:44:10 solo clock read 01:44:11
+   - 100320: At 2018-09-18 01:47:13 solo clock read 01:47:12
+   - 101190: At 2018-09-18 02:07:52 solo clock read 02:07:53
+   - 101191: At 2018-09-18 02:10:56 solo clock read 02:10:56
+   - 101180: At 2018-09-18 02:13:54 solo clock read 02:13:53
+   - 101189: At 2018-09-18 02:16:18 solo clock read 02:16:17
+   - 101192: At 2018-09-18 02:25:01 solo clock read 02:25:02
+   - 101195: At 2018-09-18 02:28:01 solo clock read 02:28:02
+
+## Microcats
+   - Different serial number for one of the microcats on recovered compared to
+     mooring diagram. Microcat located on 78m wire rope. It looks like one digit
+     was switched and last 4 were not included. Written down as 56016. Serial
+     number of instrument taken off:37SM56061-7819
+"
+writeLines(txt, file.path(save_dir, "mooring_description.txt"))
+```

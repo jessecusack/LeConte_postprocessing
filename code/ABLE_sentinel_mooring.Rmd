@@ -206,3 +206,31 @@ file.copy(path.expand("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/r
 # Diagrams
 file.copy(path.expand("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/mooring_diagrams/ABLE_S.jpg"), save_dir)
 ```
+
+```{r}
+txt <- "# ABLE sentinel mooring
+
+## Instrument layout
+
+Also see diagram in ABLE_S.jpg
+
+   |-----------------+--------------------|
+   | Reference Point | Description        |
+   |-----------------+--------------------|
+   |               1 | Microcat 7871      |
+   |-----------------+--------------------|
+
+   |-------------+---------+----------+--------|
+   | Type        | Pos (m) | Ref. Pt. | Serial |
+   |-------------+---------+----------+--------|
+   | Sentinel V  |   3.75  |        1 |  17312 |
+   | Microcat    |      0  |        1 |   7871 |
+   |-------------+---------+----------+--------|
+
+# Notes
+## Sentinel V ADCP
+  - Clock 12.6 seconds behind UTC on recovery
+
+"
+writeLines(txt, file.path(save_dir, "mooring_description.txt"))
+```
