@@ -5,6 +5,9 @@ tests/utils.py
 *.nc
 *.mat
 
+# Directories
+proc/
+
 # macOS
 .DS_Store
 

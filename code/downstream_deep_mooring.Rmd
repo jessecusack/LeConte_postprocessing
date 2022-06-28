@@ -1,0 +1,256 @@
+---
+jupyter:
+  jupytext:
+    formats: ipynb,Rmd
+    notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+  kernelspec:
+    display_name: R
+    language: R
+    name: ir
+---
+
+# Downstream deep mooring file conversion
+
+This R script converts the raw data into a CF compliant netcdf file and does the following basic processing steps:
+
+* Removing times when the instruments were out of the water
+* Removing acoustic returns from above the surface and below the bottom
+
+```{r}
+library(oce)
+source("ncwrite.R")
+save_dir <- "../proc/downstream_deep_mooring"
+```
+
+# Common parameters
+
+Common to all instruments
+
+```{r}
+lat <- 56.83596667
+lon <- -132.3616833
+dec <- 19.32  # magnetic declination
+```
+
+# Downward looking Workhorse
+
+## Checks
+
+Basic info
+
+```{r}
+file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/SN_54000.000"
+ori <- "downward"  # orientation
+```
+
+Load data
+
+```{r}
+file <- path.expand(file)
+adp <- read.adp(file, latitude = lat, longitude = lon)
+adp <- oceSetMetadata(adp, 'orientation', ori)
+```
+
+```{r}
+summary(adp)
+```
+
+### Find time in water
+
+```{r}
+plot(adp, which="pressure")
+```
+
+Indicates the pressure cut should be 80 dbar.
+
+```{r}
+pmin <- 80
+adp <- subset(adp, pressure > pmin)
+```
+
+```{r}
+plot(adp, which="pressure")
+```
+
+```{r}
+i0 <- 1
+i1 <- 100
+# N <- 670412
+plot(adp[['time']][i0:i1], adp[['temperature']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['pitch']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['roll']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['pressure']][i0:i1])
+```
+
+```{r}
+adp[['time']][1]
+```
+
+```{r}
+tail(adp[['time']], n=1)
+```
+
+```{r}
+from <- as.POSIXct("2018-09-03 02:17:00", tz="UTC")
+from1 <- as.POSIXct("2018-09-03 02:20:54", tz="UTC")
+
+plot(subset(subset(adp, time > from), time < from1), which="pressure")
+```
+
+```{r}
+to <- as.POSIXct("2018-09-16 16:10:15", tz="UTC")
+to1 <- as.POSIXct("2018-09-16 16:00:00", tz="UTC")
+
+plot(subset(subset(adp, time < to), time > to1), which="pressure")
+```
+
+### Find bottom cut off
+
+```{r}
+plot(subset(adp, distance < 105), which=5:8)
+```
+
+## Save
+
+Parameters
+
+```{r}
+from <- as.POSIXct("2018-09-03 02:17:00", tz="UTC")
+to <- as.POSIXct("2018-09-16 16:10:15", tz="UTC")
+dmax <- 105  # Max distance
+```
+
+```{r}
+file <- path.expand(file)
+adp <- read.adp(file, latitude = lat, longitude = lon, from = from, to = to)
+adp <- oceSetMetadata(adp, 'orientation', ori)
+adp <- subset(adp, distance < dmax)
+```
+
+Coordinate transformations
+
+```{r}
+xyz <- beamToXyz(adp)
+enu <- xyzToEnu(xyz, declination = dec)
+```
+
+```{r}
+SN <- enu[['serialNumber']]
+```
+
+```{r}
+SN
+```
+
+```{r}
+adp_write(enu, file.path(save_dir, "workhorse300_downward_SN00054.nc"), overwrite=TRUE)
+```
+
+# Upward looking Workhorse
+
+## Checks
+
+```{r}
+file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/ADCP/15645000.000"
+ori <- "upward"  # orientation
+```
+
+Load data
+
+```{r}
+file <- path.expand(file)
+adp <- read.adp(file, latitude = lat, longitude = lon, from = from, to = to)
+adp <- oceSetMetadata(adp, 'orientation', ori)
+```
+
+### Find surface cut off
+
+```{r}
+plot(subset(adp, distance < 90), which=5:8)
+```
+
+## Save
+
+```{r}
+dmax <- 90  # Max distance
+```
+
+```{r}
+file <- path.expand(file)
+adp <- read.adp(file, latitude = lat, longitude = lon, from = from, to = to)
+adp <- oceSetMetadata(adp, 'orientation', ori)
+adp <- subset(adp, distance < dmax)
+```
+
+```{r}
+xyz <- beamToXyz(adp)
+enu <- xyzToEnu(xyz, declination = dec)
+```
+
+```{r}
+SN <- enu[['serialNumber']]
+```
+
+```{r}
+SN
+```
+
+```{r}
+adp_write(enu, file.path(save_dir, "workhorse300_upward_SN15645.nc"), overwrite=TRUE)
+```
+
+# CTD sensors
+
+```{r}
+files <- Sys.glob("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/SBE/SBE37SM*.cnv")
+```
+
+```{r}
+for (file in files) {
+    ctd <- read.ctd(path.expand(file))
+    
+    ctd[['time']] <- ctd[['time']]
+    ctd[['latitude']] <- lat
+    ctd[['longitude']] <- lon
+    
+    ctd <- subset(subset(ctd, time > from), time < to)
+    
+    save_name <- paste("SBE37SM_", ctd[['serialNumberTemperature']], ".nc", sep="")
+    write(save_name, stdout())
+    
+    write_moored_ctd(ctd, file.path(save_dir, save_name), overwrite=TRUE)
+} 
+```
+
+# T sensors
+
+```{r}
+files <- Sys.glob("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/Downstream_Deep/RBR_Solo/*.rsk")
+```
+
+```{r}
+for (file in files) {
+    rsk <- read.rsk(path.expand(file), from = from, to = to)
+    
+    rsk@metadata["latitude"] <- lat
+    rsk@metadata["longitude"] <- lon
+    
+    save_name <- paste(rsk[['model']], "_", rsk[['serialNumber']], ".nc", sep="")
+    write(save_name, stdout())
+    
+    write_moored_rsk(rsk, file.path("../proc/downstream_deep_mooring", save_name), overwrite=TRUE)
+} 
+```
+
+# Copy additional metadata
+
+```{r}
+# Metadata
+file.copy(path.expand("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/recovery_notes.txt"), save_dir)
+# Diagrams
+file.copy(Sys.glob("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/mooring_diagrams/downstream*.jpg"), save_dir)
+```
