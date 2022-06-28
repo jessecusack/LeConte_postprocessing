@@ -219,7 +219,7 @@ for (file in files) {
     
     ctd <- subset(subset(ctd, time > from), time < to)
     
-    save_name <- paste("SBE37SM_", ctd[['serialNumberTemperature']], ".nc", sep="")
+    save_name <- paste("SBE37SM_SN", ctd[['serialNumberTemperature']], ".nc", sep="")
     write(save_name, stdout())
     
     write_moored_ctd(ctd, file.path(save_dir, save_name), overwrite=TRUE)
@@ -239,10 +239,10 @@ for (file in files) {
     rsk@metadata["latitude"] <- lat
     rsk@metadata["longitude"] <- lon
     
-    save_name <- paste(rsk[['model']], "_", rsk[['serialNumber']], ".nc", sep="")
+    save_name <- paste(rsk[['model']], "_SN", rsk[['serialNumber']], ".nc", sep="")
     write(save_name, stdout())
     
-    write_moored_rsk(rsk, file.path("../proc/downstream_deep_mooring", save_name), overwrite=TRUE)
+    write_moored_rsk(rsk, file.path(save_dir, save_name), overwrite=TRUE)
 } 
 ```
 
