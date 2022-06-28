@@ -1,0 +1,208 @@
+---
+jupyter:
+  jupytext:
+    formats: ipynb,Rmd
+    notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+  kernelspec:
+    display_name: R
+    language: R
+    name: ir
+---
+
+# ABLE Sentinel mooring file conversion
+
+This R script converts the raw data into a CF compliant netcdf file and does the following basic processing steps:
+
+* Removing times when the instruments were out of the water
+* Removing acoustic returns from above the surface and below the bottom
+
+```{r}
+library(oce)
+source("ncwrite.R")
+save_dir <- "../proc/ABLE_sentinel_mooring"
+```
+
+# Common parameters
+
+Common to all instruments
+
+```{r}
+lat <- 56.8370392
+lon <- -132.3574123
+dec <- 19.32  # magnetic declination
+```
+
+# Sentinel V
+
+## Checks
+
+Basic info
+
+```{r}
+file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/ABLE_Sentinel/ADCP/LeConte S-ABLE Sept2018 20180901T233454.pd0"
+ori <- "upward"  # orientation
+```
+
+Load data
+
+```{r}
+file <- path.expand(file)
+adp <- read.adp(file, latitude = lat, longitude = lon)
+adp <- oceSetMetadata(adp, 'orientation', ori)
+```
+
+```{r}
+summary(adp)
+```
+
+### Find time in water
+
+```{r}
+plot(adp, which="pressure")
+```
+
+Indicates the pressure cut should be 125 dbar.
+
+```{r}
+pmin <- 130
+adp <- subset(adp, pressure > pmin)
+```
+
+```{r}
+plot(adp, which="pressure")
+```
+
+```{r}
+i0 <- 1
+i1 <- 100
+# N <- 670412
+plot(adp[['time']][i0:i1], adp[['temperature']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['pitch']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['roll']][i0:i1])
+plot(adp[['time']][i0:i1], adp[['pressure']][i0:i1])
+```
+
+```{r}
+adp[['time']][1]
+```
+
+```{r}
+tail(adp[['time']], n=1)
+```
+
+```{r}
+from <- as.POSIXct("2018-09-02 01:16:45", tz="UTC")
+from1 <- as.POSIXct("2018-09-02 01:20:00", tz="UTC")
+
+plot(subset(subset(adp, time > from), time < from1), which="pressure")
+```
+
+```{r}
+to <- as.POSIXct("2018-09-15 22:15:30", tz="UTC")
+to1 <- as.POSIXct("2018-09-15 22:14:00", tz="UTC")
+
+plot(subset(subset(adp, time < to), time > to1), which="pressure")
+```
+
+### Find bottom cut off
+
+```{r}
+plot(subset(adp, distance < 145), which=5)
+```
+
+## Save
+
+Parameters
+
+```{r}
+from <- as.POSIXct("2018-09-02 01:16:45", tz="UTC")
+to <- as.POSIXct("2018-09-15 22:15:30", tz="UTC")
+dmax <- 145  # Max distance
+```
+
+```{r}
+file <- path.expand(file)
+adp <- read.adp(file, latitude = lat, longitude = lon, from = from, to = to)
+adp <- oceSetMetadata(adp, 'orientation', ori)
+adp <- subset(adp, distance < dmax)
+```
+
+Coordinate transformations
+
+```{r}
+# Convert to xyz coordinates
+xyz <- beamToXyz(adp)
+
+xyzv <- xyz
+# Extract vertical beam to new object
+xyzv[["v"]][,,3] <- xyz[["vv"]]
+
+enu <- xyzToEnu(xyz, declination = dec)
+# Apply rotation with 5th beam
+enuv <- xyzToEnu(xyzv, declination = dec)
+# Put rotated 5th beam back into original object
+enu[["vv"]] <- enuv[["v"]][,,3]
+```
+
+```{r}
+SN <- enu[['serialNumber']]
+```
+
+```{r}
+SN
+```
+
+```{r}
+adp_write(enu, file.path(save_dir, "sentinelV_SN17312.nc"), overwrite=TRUE)
+```
+
+# CTD sensors
+
+```{r}
+# Microcat
+file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/ABLE_Sentinel/SBE/SBE37SM-RS232_03707818_2018_09_18.cnv"
+
+ctd <- read.ctd(path.expand(file))
+
+ctd[['time']] <- ctd[['time']]
+ctd[['latitude']] <- lat
+ctd[['longitude']] <- lon
+
+ctd <- subset(subset(ctd, time > from), time < to)
+
+save_name <- paste("SBE37SM_SN", ctd[['serialNumberTemperature']], ".nc", sep="")
+write(save_name, stdout())
+
+write_moored_ctd(ctd, file.path(save_dir, save_name), overwrite=TRUE)
+```
+
+# Turbidity sensor
+
+```{r}
+# Turbidity sensor
+file <- "~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/ABLE_Sentinel/RBR_Virtuoso_Turbidity/054311_20180915_2116.rsk"
+
+rsk <- read.rsk(path.expand(file), from = from, to = to)
+
+rsk@metadata["latitude"] <- lat
+rsk@metadata["longitude"] <- lon
+rsk@metadata["model"] <- substr(rsk[['model']], 1, 11)  # Get rid of the silly unicode character... 
+
+save_name <- paste(rsk[['model']], "_SN", rsk[['serialNumber']], ".nc", sep="")
+write(save_name, stdout())
+
+write_moored_rsk(rsk, file.path(save_dir, save_name), overwrite=TRUE)
+```
+
+# Copy additional metadata
+
+```{r}
+# Metadata
+file.copy(path.expand("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/recovery_notes.txt"), save_dir)
+# Diagrams
+file.copy(path.expand("~/Dropbox/LeConte/Data/ocean/september2018/raw/moorings/mooring_diagrams/ABLE_S.jpg"), save_dir)
+```

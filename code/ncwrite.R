@@ -552,7 +552,7 @@ copy_metadata <- function(meta, ncout, namePrefix="", disallowed_metadata_names=
 
     if (is.list(dat)) {  # Recursive copy of other metadata
       write(paste("Stepping into:", name), stdout())
-      copy_metadata(dat, ncout, paste(namePrefix, name, sep=""), disallowed_metadata_names)
+      copy_metadata(dat, ncout, paste(namePrefix, name, "_", sep=""), disallowed_metadata_names)
       next
     }
 
@@ -565,7 +565,7 @@ copy_metadata <- function(meta, ncout, namePrefix="", disallowed_metadata_names=
       dat <- as.integer(dat)
       write("Converting logical", stdout())
     }
-
+      
     finalName <- paste(namePrefix, name, sep="")
     write(paste("Inputting:", name, "as", finalName), stdout())
     ncatt_put(ncout, 0, finalName, dat)
